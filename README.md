@@ -44,4 +44,4 @@ The optional `GCC_ROOT` argument, if set, causes the built to use a build of GCC
 
 The optional `SPLIT` argument, if set, causes the dependencies to be installed into separate directories below `PREFIX`.  This is mostly useful for testing, since each dependency can then be more easily cleaned before being rebuilt.
 
-The `make` command will generate all of the dependencies for USD, as well as a script `$PREFIX/bin/build-usd.sh` which will build and install USD using these dependencies.  To see the usage of `build-usd.sh`, simply run it without any arguments.
+The `make` command will generate all of the dependencies for USD. If you run it **without** the SPLIT flag is will also create a script `$PREFIX/bin/build-usd.sh` which will build and install USD using these dependencies.  To see the usage of `build-usd.sh`, simply run it without any arguments.
