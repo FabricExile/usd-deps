@@ -35,10 +35,12 @@ sudo yum install gcc-c++ cmake libxml2-devel libxslt-devel gstreamer-plugins-bas
 To build the USD dependencies, run:
 
 ```
-make -j4 PREFIX=/opt/usd-deps [GCC_ROOT=/opt/gcc-4.8] [SPLIT=1]
+make -j4 PREFIX=/opt/usd-deps [PYTHON_PREFIX=/usr/local] [GCC_ROOT=/opt/gcc-4.8] [SPLIT=1]
 ```
 
 The required `PREFIX` argument is the directory into which the USD dependencies should be installed.
+
+The optional `PYTHON_PREFIX` argument, if set, uses Python 2.7 installed at the given install prefix for the USD build.  If not provided, the Makefile will build Python 2.7 for you.
 
 The optional `GCC_ROOT` argument, if set, causes the built to use a build of GCC below the given directory.  It also sets `LD_LIBRARY_PATH` to the corresponding subdirectories so that executables that are part of the build can be run during the build process.
 

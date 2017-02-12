@@ -54,6 +54,12 @@ else
 cleanDstDir=
 endif
 
+ifdef PYTHON_PREFIX
+USD_PYTHON_PREFIX=$(PYTHON_PREFIX)
+else
+USD_PYTHON_PREFIX=$(call dstDir,python)
+endif
+
 touchBuildStamp=\
 	touch $(call buildStamp,$(1))
 
@@ -133,6 +139,7 @@ $(call buildStamp,openexr): $(call buildStamp,ilmbase)
 	touch $(call buildStamp,openexr)
 
 $(call buildStamp,python):
+ifndef PYTHON_PREFIX
 	$(call unpackTGZ,Python-2.7.12)
 	cd build/Python-2.7.12 && \
 	  LDFLAGS="-Wl,-rpath,$(call dstDir,python)/lib" \
@@ -145,6 +152,7 @@ $(call buildStamp,python):
 	  CXX=$(GCC_CXX) \
 	  LDFLAGS="-Wl,-rpath,$(call dstDir,python)/lib" \
 	  $(MAKE) install
+endif
 	$(call touchBuildStamp,python)
 
 #$(call buildStamp,pyilmbase): $(call buildStamp,ilmbase) $(call buildStamp,boost)
@@ -169,7 +177,7 @@ $(call buildStamp,python):
 $(call buildStamp,boost): $(call buildStamp,python)
 	$(call unpackTarBZ2,boost_1_55_0)
 	echo 'using gcc : 4.8 : $(GCC_CXX) ;' >>build/boost_1_55_0/tools/build/v2/user-config.jam
-	cd build/boost_1_55_0 && ./bootstrap.sh --with-python=$(call dstDir,python)/bin/python
+	cd build/boost_1_55_0 && ./bootstrap.sh --with-python=$(USD_PYTHON_PREFIX)/bin/python
 	$(call cleanDirDir,boost)
 	cd build/boost_1_55_0 \
 	  && ./b2 \
@@ -253,6 +261,10 @@ $(call buildStamp,oiio): $(call buildStamp,ilmbase) $(call buildStamp,openexr) $
 	  .
 	$(call cleanDstDir,oiio)
 	cd build/oiio-Release-1.5.20 && $(MAKE) install
+	mkdir -p $(call dstDir,oiio)/lib/python2.7/site-packages/
+	mv $(call dstDir,oiio)/lib/python/site-packages/OpenImageIO.so $(call dstDir,oiio)/lib/python2.7/site-packages/
+	rmdir $(call dstDir,oiio)/lib/python/site-packages
+	rmdir $(call dstDir,oiio)/lib/python
 	$(call touchBuildStamp,oiio)
 
 $(call buildStamp,OpenSubdiv): $(call buildStamp,glew)
@@ -315,9 +327,9 @@ $(call buildStamp,shiboken): $(call buildStamp,python) $(call buildStamp,qt)
 	mkdir -p build/shiboken-1.2.2/build
 	cd build/shiboken-1.2.2/build && \
 	  $(call cmakeCmd,shiboken) \
-	  -DPYTHON_EXECUTABLE:FILEPATH=$(call dstDir,python)/bin/python \
-	  -DPYTHON_LIBRARY=$(call dstDir,python)/lib \
-	  -DPYTHON_INCLUDE_DIR=$(call dstDir,python)/include/python2.7 \
+	  -DPYTHON_EXECUTABLE:FILEPATH=$(USD_PYTHON_PREFIX)/bin/python \
+	  -DPYTHON_LIBRARY=$(USD_PYTHON_PREFIX)/lib \
+	  -DPYTHON_INCLUDE_DIR=$(USD_PYTHON_PREFIX)/include/python2.7 \
 	  -DQT_QMAKE_EXECUTABLE=$(call dstDir,qt)/bin/qmake \
 	  ..
 	$(call cleanDstDir,shiboken)
@@ -329,9 +341,11 @@ $(call buildStamp,PyOpenGL): $(call buildStamp,python)
 	cd build/PyOpenGL-3.0.2 && \
 	  CC=$(GCC_CC) \
 	  CXX=$(GCC_CXX) \
-	  $(call dstDir,python)/bin/python \
+	  PYTHONPATH="$$PYTHONPATH:$(call dstDir,python)/lib/python2.7/site-packages" \
+	  $(USD_PYTHON_PREFIX)/bin/python \
 	  setup.py \
-	  install
+	  install \
+	  --prefix $(call dstDir,python)
 	$(call touchBuildStamp,PyOpenGL)
 
 define BUILD_SCRIPT
@@ -358,8 +372,9 @@ fi
 
 INSTALL_DIR="$$1"; shift
 
-export PATH=$(call dstDir,pyside-tools)/bin:$$PATH
-export LD_LIBRARY_PATH=$(call dstDir,python)/lib:$(call dstDir,shiboken)/lib:$(GCC_LIB):$$LD_LIBRARY_PATH
+export PATH="$(call dstDir,pyside-tools)/bin:$$PATH"
+export LD_LIBRARY_PATH="$(USD_PYTHON_PREFIX)/lib:$(call dstDir,shiboken)/lib:$(GCC_LIB):$$LD_LIBRARY_PATH"
+export PYTHONPATH="$(call dstDir,python)/lib/python2.7/site-packages:$$PYTHON_PATH"
 
    mkdir $$BUILD_DIR \
 && cd $$BUILD_DIR \
@@ -377,9 +392,9 @@ cmake \
   -DTBB_INCLUDE_DIRS=$(call dstDir,tbb)/include \
   -DOPENEXR_LOCATION=$(call dstDir,openexr) \
   -DQT_QMAKE_EXECUTABLE=$(call dstDir,qt)/bin/qmake \
-  -DPYTHON_EXECUTABLE:FILEPATH=$(call dstDir,python)/bin/python \
-  -DPYTHON_LIBRARY=$(call dstDir,python)/lib/libpython2.7.so \
-  -DPYTHON_INCLUDE_DIR=$(call dstDir,python)/include/python2.7 \
+  -DPYTHON_EXECUTABLE:FILEPATH=$(USD_PYTHON_PREFIX)/bin/python \
+  -DPYTHON_LIBRARY=$(USD_PYTHON_PREFIX)/lib/libpython2.7.so \
+  -DPYTHON_INCLUDE_DIR=$(USD_PYTHON_PREFIX)/include/python2.7 \
   -DDOUBLE_CONVERSION_LIBRARY=$(call dstDir,double-conversion)/lib/libdouble-conversion.so \
   -DDOUBLE_CONVERSION_INCLUDE_DIR=$(call dstDir,double-conversion)/include/double-conversion \
   -DOIIO_BASE_DIR=$(call dstDir,oiio) \
