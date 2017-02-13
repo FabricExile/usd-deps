@@ -337,6 +337,7 @@ $(call buildStamp,shiboken): $(call buildStamp,python) $(call buildStamp,qt)
 	$(call touchBuildStamp,shiboken)
 
 $(call buildStamp,PyOpenGL): $(call buildStamp,python)
+	mkdir -p $(call dstDir,PyOpenGL)/lib/python2.7/site-packages
 	$(call unpackTarGZ,PyOpenGL-3.0.2)
 	cd build/PyOpenGL-3.0.2 && \
 	  CC=$(GCC_CC) \
