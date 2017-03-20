@@ -1,0 +1,40 @@
+--- CMakeLists.txt	Thu Jan 15 19:28:49 2015
++++ /c/temp/CMakeLists.txt	Mon Mar 20 18:27:21 2017
+@@ -191,7 +191,7 @@
+ #-******************************************************************************
+ #-******************************************************************************
+ FIND_PACKAGE( OpenGL )
+-FIND_PACKAGE( GLUT )
++#FIND_PACKAGE( GLUT )
+ 
+ IF ( ${WINDOWS} )
+   # Do a windows OpenGL thing, whatever that may be
+@@ -240,7 +240,13 @@
+ #-******************************************************************************
+ 
+ INCLUDE( "./build/AlembicIlmBase.cmake" )
+-INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY} )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/config )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/Half )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/Iex )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/IexMath )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/IlmThread )
++INCLUDE_DIRECTORIES( ${ALEMBIC_ILMBASE_INCLUDE_DIRECTORY}/Imath )
++ADD_DEFINITIONS(-DNOMINMAX)
+ 
+ IF(DEFINED USE_PYILMBASE AND NOT USE_PYILMBASE)
+     MESSAGE(STATUS "Skipping PyILMBase")
+@@ -254,10 +260,9 @@
+ INCLUDE("./build/AlembicPython.cmake")
+ 
+ # Include HDF5 stuff
+-INCLUDE("./build/AlembicHDF5.cmake")
+-if ( ALEMBIC_HDF5_FOUND )
+-  INCLUDE_DIRECTORIES( ${ALEMBIC_HDF5_INCLUDE_PATH} )
+-ENDIF()
++# INCLUDE("./build/AlembicHDF5.cmake")
++
++INCLUDE_DIRECTORIES( ${ALEMBIC_HDF5_INCLUDE_PATH} )
+ 
+ # Recurse into libs, then bins.
+ ADD_SUBDIRECTORY( lib )

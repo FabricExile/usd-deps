@@ -1,0 +1,10 @@
+--- Foundation.h	Thu Jan 15 19:28:49 2015
++++ /c/temp/Foundation.h	Mon Mar 20 18:12:04 2017
+@@ -49,6 +49,7 @@
+ #include <iostream>
+ #include <string>
+ #include <exception>
++#include <algorithm>
+ 
+ #include <stdlib.h>
+ #include <stdio.h>
