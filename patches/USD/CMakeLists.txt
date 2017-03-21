@@ -48,6 +48,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_DIRS}
   ${TBB_INCLUDE_DIRS}
+  ${ILMBASE_INCLUDE_DIR}/Half
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -140,6 +141,11 @@ LIST(FILTER SOURCES EXCLUDE REGEX \.template\.)
 LIST(FILTER SOURCES EXCLUDE REGEX \/wrap)
 # filter out the examples cpp files
 LIST(FILTER SOURCES EXCLUDE REGEX \/examples\.cpp)
+# # filter out all of the module related cpp files
+# LIST(FILTER SOURCES EXCLUDE REGEX \/module\.cpp)
+# LIST(FILTER SOURCES EXCLUDE REGEX \/moduleDeps\.cpp)
+# LIST(FILTER SOURCES EXCLUDE REGEX \/debugCodes\.cpp)
+# LIST(FILTER SOURCES EXCLUDE REGEX \/notice\.cpp)
 
 # library
 add_library(usd_static

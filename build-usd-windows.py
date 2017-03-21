@@ -56,9 +56,9 @@ if target in ['clean']:
 
 #========================================= helpers =====================================
 
-def requiresBuild(name, dependencies=[], excludeAll=False):
+def requiresBuild(name, dependencies=[], excludeFromAllTarget=False):
   targets = [name] + dependencies
-  if not excludeAll:
+  if not excludeFromAllTarget:
     targets += ['all']
   if not target in targets:
     return False
@@ -368,10 +368,14 @@ if requiresBuild('alembic'):
 
 #======================================== opensubdiv =================================
 
-if requiresBuild('usd', excludeAll=True):
+if requiresBuild('usd', excludeFromAllTarget=True):
+
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
     raise Exception('Need to clone USD to %s' % sourcepath)
+
+  # replace the cmakelists file
+  shutil.copyfile(os.path.join(root, 'patches', 'USD', 'CMakeLists.txt'), os.path.join(sourcepath, 'CMakeLists.txt'))
 
   includePath = os.path.join(build, 'USD', 'build', 'include')
   for foldername in ['base', 'usd', 'imaging', 'usdImaging']:
@@ -388,7 +392,7 @@ if requiresBuild('usd', excludeAll=True):
           os.makedirs(absfolder)
         shutil.copy(path, abspath)
 
-  runCMake('USD', sourcepath, ['usd'],
+  runCMake('USD', sourcepath, ['usd_static'],
     flags = {
       'BOOST_INCLUDEDIR': boostincludepath,
       'BOOST_LIBRARYDIR': boostlibrarypath,
@@ -396,6 +400,8 @@ if requiresBuild('usd', excludeAll=True):
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
+      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
+      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
 
       'PXR_USE_NAMESPACES': 'off',
     })
