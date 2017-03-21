@@ -1,0 +1,13 @@
+--- ConfigureChecks.cmake	Tue Mar 21 10:20:08 2017
++++ /c/temp/ConfigureChecks.cmake	Tue Mar 21 10:20:05 2017
+@@ -184,7 +184,9 @@
+   SET (H5_HAVE_GETCONSOLESCREENBUFFERINFO 1)
+   SET (H5_HAVE_FUNCTION 1)
+   SET (H5_GETTIMEOFDAY_GIVES_TZ 1)
+-  SET (H5_HAVE_TIMEZONE 1)
++  if (NOT MSVC14)
++    set (H5_HAVE_TIMEZONE 1)
++  endif ()
+   SET (H5_HAVE_GETTIMEOFDAY 1)
+   SET (H5_LONE_COLON 0)
+ ENDIF (WINDOWS)
