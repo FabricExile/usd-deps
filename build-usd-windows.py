@@ -136,11 +136,11 @@ def stageResults(name, includeFolders, libraryFolders):
     folders = sources[key][0]
     filters = sources[key][1]
     for folder in folders:
-      for root, dirs, files in os.walk(folder):
+      for r, dirs, files in os.walk(folder):
         for f in files:
           if not f.rpartition('.')[2].lower() in filters:
             continue
-          path = os.path.join(root, f)
+          path = os.path.join(r, f)
           if key == 'lib':
             targetpath = os.path.join(stage, 'lib', f)
           else:
@@ -187,7 +187,9 @@ if boostlibrarypath is None:
 
 if requiresBuild('tbb', ['opensubdiv']):
   # tbb on windows uses a drop from https://github.com/wjakob/tbb/tree/tbb43u6
-  extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz')
+  if extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz'):
+    patchSourceFile('tbb/tbb-tbb43u6/include/tbb/tbb_config.h', 'tbb/tbb_config.h.patch')
+
   runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc_static', 'tbbmalloc_proxy_static', 'tbb_static'])
 
   stageResults('tbb', [
@@ -281,11 +283,8 @@ if requiresBuild('ptex', ['opensubdiv']):
 if requiresBuild('opensubdiv'):
   extractSourcePackage('opensubdiv', 'OpenSubdiv-3_0_5', 'OpenSubdiv-3_0_5.tar.gz')
 
-  #glewsourcepath = os.path.join(build, 'glew', 'glew-1.13.0')
   ptexsourcepath = os.path.join(build, 'ptex', 'ptex-2.0.41/src')
   ptexbuildpath = os.path.join(build, 'ptex', 'build')
-  tbbsourcepath = os.path.join(build, 'tbb', 'tbb-tbb43u6')
-  tbbbuildpath = os.path.join(build, 'tbb', 'build')
 
   runCMake('opensubdiv', 'OpenSubdiv-3_0_5', ['opensubdiv/osd_static_cpu'],
     flags={
@@ -294,8 +293,8 @@ if requiresBuild('opensubdiv'):
       'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
       'PTEX_INCLUDE_DIR': os.path.join(stage, 'include'),
       'PTEX_LIBRARY': os.path.join(ptexbuildpath, 'ptex', 'Release', 'Ptex.lib'),
-      'TBB_INCLUDE_DIR': os.path.join(tbbsourcepath, 'include'),
-      'TBB_LIBRARIES': os.path.join(tbbbuildpath, 'Release'),
+      'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
+      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
 
       'NO_LIB': 'off',
       'NO_EXAMPLES': 'on',
@@ -374,30 +373,62 @@ if requiresBuild('usd', excludeAll=True):
   if not os.path.exists(sourcepath):
     raise Exception('Need to clone USD to %s' % sourcepath)
 
-  tbbsourcepath = os.path.join(build, 'tbb', 'tbb-tbb43u6')
-  tbbbuildpath = os.path.join(build, 'tbb', 'build')
+  includePath = os.path.join(build, 'USD', 'build', 'include')
+  for foldername in ['base', 'usd', 'imaging', 'usdImaging']:
+    folder = os.path.join(root, 'USD', 'pxr', foldername, 'lib')
+    for r, dirs, files in os.walk(folder):
+      for f in files:
+        if not f.rpartition('.')[2].lower() in ['h']:
+          continue
+        path = os.path.join(r, f)
+        relpath = os.path.relpath(path, folder)
+        abspath = os.path.join(includePath, 'pxr', foldername, relpath)
+        absfolder = os.path.split(abspath)[0]
+        if not os.path.exists(absfolder):
+          os.makedirs(absfolder)
+        shutil.copy(path, abspath)
 
-  runCMake('USD', sourcepath, ['ALL_BUILD'],
+  runCMake('USD', sourcepath, ['usd'],
     flags = {
       'BOOST_INCLUDEDIR': boostincludepath,
       'BOOST_LIBRARYDIR': boostlibrarypath,
-      'TBB_INCLUDE_DIR': os.path.join(tbbsourcepath, 'include'),
-      'TBB_LIBRARIES': os.path.join(tbbbuildpath, 'Release'),
+      'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
+      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
 
-      'PXR_STRICT_BUILD_MODE': 'off',
-      'PXR_VALIDATE_GENERATED_CODE': 'off',
-      'PXR_BUILD_TESTS': 'off',
-      'PXR_BUILD_IMAGING': 'off',
-      'PXR_BUILD_USD_IMAGING': 'off',
-      'PXR_BUILD_KATANA_PLUGIN': 'off',
-      'PXR_BUILD_MAYA_PLUGIN': 'off',
-      'PXR_BUILD_ALEMBIC_PLUGIN': 'off',
-      'PXR_ENABLE_MULTIVERSE_SUPPORT': 'off',
-      'PXR_MAYA_TBB_BUG_WORKAROUND': 'off',
-      'PXR_ENABLE_NAMESPACES': 'off',
+      'PXR_USE_NAMESPACES': 'off',
     })
+
+  stageResults('usd', [
+    os.path.join(build, 'USD', 'build', 'include')
+    ], [
+    os.path.join(build, 'USD', 'build', 'Release')
+    ])
+
+  # runCMake('USD', sourcepath, [],
+  #   flags = {
+  #     'BOOST_INCLUDEDIR': boostincludepath,
+  #     'BOOST_LIBRARYDIR': boostlibrarypath,
+  #     'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
+  #     'TBB_LIBRARIES': os.path.join(stage, 'lib'),
+  #     'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
+  #     'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
+
+  #     'MSVC_RUNTIME' : 'static',
+
+  #     'PXR_STRICT_BUILD_MODE': 'off',
+  #     'PXR_VALIDATE_GENERATED_CODE': 'off',
+  #     'PXR_BUILD_TESTS': 'off',
+  #     'PXR_BUILD_IMAGING': 'off',
+  #     'PXR_BUILD_USD_IMAGING': 'off',
+  #     'PXR_BUILD_KATANA_PLUGIN': 'off',
+  #     'PXR_BUILD_MAYA_PLUGIN': 'off',
+  #     'PXR_BUILD_ALEMBIC_PLUGIN': 'off',
+  #     'PXR_ENABLE_MULTIVERSE_SUPPORT': 'off',
+  #     'PXR_MAYA_TBB_BUG_WORKAROUND': 'off',
+  #     'PXR_ENABLE_NAMESPACES': 'off',
+  #   })
 
 
 # not needed:

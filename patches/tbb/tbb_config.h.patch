@@ -1,0 +1,20 @@
+--- tbb_config.h	Thu May 12 04:54:32 2016
++++ /c/temp/tbb_config.h	Tue Mar 21 16:02:25 2017
+@@ -206,7 +206,7 @@
+     #define __TBB_STATIC_ASSERT_PRESENT               (_MSC_VER >= 1600)
+     #define __TBB_CPP11_TUPLE_PRESENT                 (_MSC_VER >= 1600)
+     #define __TBB_INITIALIZER_LISTS_PRESENT           (_MSC_VER >= 1800)
+-    #define __TBB_CONSTEXPR_PRESENT                   0
++    #define __TBB_CONSTEXPR_PRESENT                   (_MSC_VER >= 1900)
+     #define __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT  (_MSC_VER >= 1800)
+     #define __TBB_NOEXCEPT_PRESENT                    (_MSC_VER >= 1900)
+     #define __TBB_CPP11_STD_BEGIN_END_PRESENT         (_MSC_VER >= 1700)
+@@ -627,7 +627,7 @@
+     #define __TBB_FORCE_64BIT_ALIGNMENT_BROKEN 0
+ #endif
+ 
+-#if __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && __TBB_GCC_VERSION < 40700 && !defined(__INTEL_COMPILER) && !defined (__clang__)
++#if __TBB_DEFAULTED_AND_DELETED_FUNC_PRESENT && __TBB_GCC_VERSION < 40700 && !defined(__INTEL_COMPILER) && !defined (__clang__) && !defined (_MSC_VER)
+     #define __TBB_ZERO_INIT_WITH_DEFAULTED_CTOR_BROKEN 1
+ #endif
+ 
