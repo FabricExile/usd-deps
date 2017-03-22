@@ -10,26 +10,30 @@ else()
     cmake_minimum_required(VERSION 2.8.8)
 endif()
 
-if(MSVC)
-    set(Boost_USE_MULTITHREADED ON)
-    set(Boost_USE_STATIC_LIBS ON)
-    set(Boost_USE_STATIC_RUNTIME ON)
-endif()
+# if(MSVC)
+#     set(Boost_USE_MULTITHREADED ON)
+#     set(Boost_USE_STATIC_LIBS ON)
+#     set(Boost_USE_STATIC_RUNTIME ON)
+# endif()
 
 # --Python
 find_package(PythonLibs 2.7 REQUIRED)
 
-# --Boost
-find_package(Boost
-    COMPONENTS
-        date_time
-        iostreams
-        program_options
-        python
-        regex
-        system
-    REQUIRED
-)
+# # --Boost
+# find_package(Boost
+#     COMPONENTS
+#         date_time
+#         iostreams
+#         program_options
+#         python
+#         regex
+#         system
+#     REQUIRED
+# )
+# add_definitions(${BOOST_DEFINITIONS})
+add_definitions(-DBOOST_ALL_NO_LIB)
+include_directories(${BOOST_INCLUDEDIR})
+
 
 # --TBB
 find_package(TBB REQUIRED)
@@ -76,19 +80,6 @@ add_definitions(-DBUILD_COMPONENT_SRC_PREFIX="")
 if (WIN32)
     add_definitions(-DTF_NO_GNU_EXT)
     add_definitions(-DYY_NO_UNISTD_H)
-
-    # set( MSVC_RUNTIME     "static")
-
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4005" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4065" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4244" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4267" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4305" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /wd4605" )
-
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /MP8" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /bigobj" )
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /DWIN32 /D_WINDOWS /GR /EHsc /MT /O2 /Ob2 /D NDEBUG")
 endif()
 
 # library specific
@@ -153,4 +144,3 @@ add_library(usd_static
 
     ${SOURCES}
 )
-

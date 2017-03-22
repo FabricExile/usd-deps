@@ -16,6 +16,7 @@ allowedTargets = [
   'all',
   'zlib', 
   'tbb', 
+  'boost', 
   'double-conversion',
   'ilmbase',
   'hdf5',
@@ -41,8 +42,12 @@ stage = os.path.join(root, 'stage')
 vsversion = '14'
 vspath = r"C:\Program Files (x86)\Microsoft Visual Studio %s.0\Common7\IDE" % vsversion
 msbuild = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe"
+ucrtpath = r'C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0'
+
 if not os.path.exists(msbuild):
-  raise Exception('no visual studio executable found')
+  raise Exception('msbuildpath not found')
+if not os.path.exists(ucrtpath):
+  raise Exception('ucrtpath not found')
 
 #========================================= clean =====================================
 if target in ['clean']:
@@ -82,13 +87,34 @@ def extractSourcePackage(name, folder, filename):
   return False
 
 def patchSourceFile(sourceFile, patchFile):
-  sourceFile = os.path.join(build, sourceFile)
-  patchFile = os.path.join(root, 'patches', patchFile)
+  if not os.path.isabs(sourceFile):
+    sourceFile = os.path.join(build, sourceFile)
+  if not os.path.isabs(patchFile):
+    patchFile = os.path.join(root, 'patches', patchFile)
   cmd = ['patch', sourceFile, patchFile]
   p = subprocess.Popen(cmd, cwd=os.path.split(sourceFile)[0])
   p.wait()
   if p.returncode != 0:
     raise Exception('patchSourceFile failed')
+
+def insertCMakeProlog(sourcepath):
+  if not os.path.isabs(sourcepath):
+    sourcepath = os.path.join(build, sourcepath)
+  sourcefile = os.path.join(sourcepath, 'CMakeLists.txt')
+  prologfile = os.path.join(root, 'patches', 'CMakeLists.txt.prolog')
+  content = None
+  with open(sourcefile, 'rb') as f:
+    content = f.read()
+  prolog = None
+  with open(prologfile, 'rb') as f:
+    prolog = f.read()
+
+  if not content.startswith(prolog):
+    with open(sourcefile, 'wb') as f:
+      f.write(prolog + content)
+
+  for override in ['c_flag_overrides.cmake', 'cxx_flag_overrides.cmake']:
+    shutil.copyfile(os.path.join(root, 'patches', override), os.path.join(sourcepath, override))
 
 def runMSBuild(project, buildpath):
   env = {}
@@ -111,10 +137,17 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build'):
 
   env.update(os.environ)
 
+  insertCMakeProlog(sourcepath)
+
   # cmd = ['cmake', "--trace", "--debug-output", "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
-  cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
+  # cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
+  cmd = ['cmake', "-G", "Visual Studio %s" % vsversion, sourcepath]
   for flag in flags:
     cmd += ['-D%s=%s' % (flag, flags[flag])]
+
+  # ensure 64 bit generator
+  cmd += ['-DCMAKE_GENERATOR_PLATFORM=x64']
+
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
@@ -168,20 +201,46 @@ if requiresBuild('zlib'):
 
 #========================================= boost ====================================
 
-# we'll use 163 binaries for visual studio 14.0
-# https://sourceforge.net/projects/boost/files/boost-binaries/1.63.0/
-boostdir = os.path.join(root, 'boost')
-if not os.path.exists(boostdir):
-  raise Exception('You need to install boost to %s or create a link there.' % boostdir)
-boostincludepath = boostdir
-boostlibrarypath = None
-for subfolder in glob.glob(boostdir+'/*'):
-  subfoldername = os.path.split(subfolder)[1]
-  if subfoldername.startswith('lib64') and subfoldername.endswith('%s.0' % vsversion):
-    boostlibrarypath = subfolder
-    break
-if boostlibrarypath is None:
-  raise Exception('Boost library path %s/lib64-msvc-%s.0 not found.' % (boostdir, vsversion))
+if requiresBuild('boost'):
+  sourcepath = os.path.join(build, 'boost', 'boost_1_63_0')
+  buildpath = os.path.join(build, 'boost', 'build')
+
+  env = {}
+  env.update(os.environ)
+  env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
+
+  extractSourcePackage('boost', 'boost_1_63_0', 'boost_1_63_0.tar.bz2')
+  if platform.system() == 'Windows':
+
+    content = None
+    with open(os.path.join(root, 'patches', 'boost', 'build_boost.bat'), 'rb') as f:
+      content = f.read()
+
+    content = content.replace('{{VSVERSION}}', vsversion)
+    content = content.replace('{{SOURCEPATH}}', sourcepath)
+    content = content.replace('{{BUILDPATH}}', buildpath)
+    content = content.replace('{{STAGEPATH}}', stage)
+
+    with open(os.path.join(sourcepath, 'build_boost.bat'), 'wb') as f:
+      f.write(content)
+
+    p = subprocess.Popen([os.path.join(sourcepath, 'build_boost.bat')])
+    p.wait()
+    if p.returncode != 0:
+      raise Exception('building boost failed')
+
+  else:
+    raise Exception('implement running b2 some other way')
+    # you may want to look into the build_boost.bat in patches
+
+  marker = os.path.join(build, 'boost', '.boost.marker')
+  open(marker, 'wb').write('done')
+
+  stageResults('boost', [
+    os.path.join(build, 'boost', 'boost_1_63_0', 'boost')
+    ], [
+    os.path.join(build, 'boost', 'build', 'lib')
+    ])
 
 #========================================= tbb =====================================
 
@@ -190,7 +249,7 @@ if requiresBuild('tbb', ['opensubdiv']):
   if extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz'):
     patchSourceFile('tbb/tbb-tbb43u6/include/tbb/tbb_config.h', 'tbb/tbb_config.h.patch')
 
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc_static', 'tbbmalloc_proxy_static', 'tbb_static'])
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb', 'tbbmalloc_static', 'tbbmalloc_proxy_static', 'tbb_static'])
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
@@ -224,7 +283,7 @@ if requiresBuild('ilmbase', ['openexr']):
 
 #========================================== hdf5 =====================================
 
-if requiresBuild('hdf5', ['alembic']):
+if requiresBuild('hdf5', ['alembic'], excludeFromAllTarget=True):
   if extractSourcePackage('hdf5', 'hdf5-1.8.9', 'hdf5-1.8.9.tar.bz2'):
     patchSourceFile('hdf5/hdf5-1.8.9/config/cmake/ConfigureChecks.cmake', 'hdf5/ConfigureChecks.cmake.patch')
 
@@ -263,7 +322,7 @@ if requiresBuild('openexr'):
 
 #========================================== ptex =====================================
 
-if requiresBuild('ptex', ['opensubdiv']):
+if requiresBuild('ptex', ['opensubdiv'], excludeFromAllTarget=True):
   extractSourcePackage('ptex', 'ptex-2.0.41', 'ptex-2.0.41.zip')
   runCMake('ptex', 'ptex-2.0.41/src', ['ptex/Ptex_static'],
     flags={
@@ -280,7 +339,7 @@ if requiresBuild('ptex', ['opensubdiv']):
 
 #======================================== opensubdiv =================================
 
-if requiresBuild('opensubdiv'):
+if requiresBuild('opensubdiv', excludeFromAllTarget=True):
   extractSourcePackage('opensubdiv', 'OpenSubdiv-3_0_5', 'OpenSubdiv-3_0_5.tar.gz')
 
   ptexsourcepath = os.path.join(build, 'ptex', 'ptex-2.0.41/src')
@@ -320,7 +379,7 @@ if requiresBuild('opensubdiv'):
     os.path.join(build, 'opensubdiv', 'build', 'lib', 'Release')
     ])
 
-if requiresBuild('alembic'):
+if requiresBuild('alembic', excludeFromAllTarget=True):
   if extractSourcePackage('alembic', 'alembic-1.5.8', 'alembic-1.5.8.tar.gz'):
     patchSourceFile('alembic/alembic-1.5.8/CMakeLists.txt', 'alembic/CMakeLists.txt.patch')
     patchSourceFile('alembic/alembic-1.5.8/lib/Alembic/Abc/Foundation.h', 'alembic/Foundation.h.patch')
@@ -341,8 +400,8 @@ if requiresBuild('alembic'):
       'BUILD_SHARED_LIBS': 'off', 
       'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
       'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
-      'BOOST_INCLUDEDIR': boostincludepath,
-      'BOOST_LIBRARYDIR': boostlibrarypath,
+      'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
+      'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'ALEMBIC_ILMBASE_INCLUDE_DIRECTORY': os.path.join(stage, 'include', 'ilmbase'),
       'ILMBASE_ROOT': stage,
       'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
@@ -368,7 +427,7 @@ if requiresBuild('alembic'):
 
 #======================================== opensubdiv =================================
 
-if requiresBuild('usd', excludeFromAllTarget=True):
+if requiresBuild('usd'):
 
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
@@ -394,8 +453,8 @@ if requiresBuild('usd', excludeFromAllTarget=True):
 
   runCMake('USD', sourcepath, ['usd_static'],
     flags = {
-      'BOOST_INCLUDEDIR': boostincludepath,
-      'BOOST_LIBRARYDIR': boostlibrarypath,
+      'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
+      'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
