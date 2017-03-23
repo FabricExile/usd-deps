@@ -32,6 +32,7 @@ find_package(PythonLibs 2.7 REQUIRED)
 # )
 # add_definitions(${BOOST_DEFINITIONS})
 add_definitions(-DBOOST_ALL_NO_LIB)
+add_definitions(-DBOOST_PYTHON_STATIC_LIB)
 include_directories(${BOOST_INCLUDEDIR})
 
 
@@ -74,6 +75,9 @@ FILE(APPEND ${CMAKE_BINARY_DIR}/include/pxr/pxr.h "
 ")
 endif()
 
+include(CXXHelpers)
+include(msvcdefaults)
+
 # defines
 add_definitions(-DBUILD_OPTLEVEL_OPT)
 add_definitions(-DBUILD_COMPONENT_SRC_PREFIX="")
@@ -110,6 +114,7 @@ FILE(GLOB SOURCES
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/js/*.cpp
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/plug/*.cpp
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/tf/*.cpp
+  ${CMAKE_SOURCE_DIR}/pxr/base/lib/tf/pxrDoubleConversion/*.cc
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/tracelite/*.cpp
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/vt/*.cpp
   ${CMAKE_SOURCE_DIR}/pxr/base/lib/work/*.cpp
@@ -130,17 +135,27 @@ FILE(GLOB SOURCES
 LIST(FILTER SOURCES EXCLUDE REGEX \.template\.)
 # filter out the boost::python wrap files
 LIST(FILTER SOURCES EXCLUDE REGEX \/wrap)
+# filter out all of the python module related cpp files
+LIST(FILTER SOURCES EXCLUDE REGEX \/module\.cpp)
+LIST(FILTER SOURCES EXCLUDE REGEX \/moduleDeps\.cpp)
 # filter out the examples cpp files
 LIST(FILTER SOURCES EXCLUDE REGEX \/examples\.cpp)
-# # filter out all of the module related cpp files
-# LIST(FILTER SOURCES EXCLUDE REGEX \/module\.cpp)
-# LIST(FILTER SOURCES EXCLUDE REGEX \/moduleDeps\.cpp)
-# LIST(FILTER SOURCES EXCLUDE REGEX \/debugCodes\.cpp)
-# LIST(FILTER SOURCES EXCLUDE REGEX \/notice\.cpp)
+
+set(DLLMAINSOURCE ${CMAKE_SOURCE_DIR}/dllmain.cpp)
 
 # library
 add_library(usd_static
     STATIC
 
     ${SOURCES}
+    ${DLLMAINSOURCE}
 )
+
+if(WIN32)
+    if(MSVC)
+        set_target_properties(
+            usd_static
+            PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS")
+    endif()
+endif()
+

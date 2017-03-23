@@ -14,6 +14,8 @@ This package is licensed under a three-clause BSD license, contained in the file
 
 ## Important Notes
 
+- Latest supported commit is 620e9297b806d96ce3483a8c5ed8a18b12337852
+
 - This is currently Linux-only since USD is Linux-only
 
 - This does not work for the v0.7.0 tag of USD since there are issues with the CMake configuration.  As of this writing it works with the dev branch of USD.

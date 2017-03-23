@@ -86,15 +86,15 @@ def extractSourcePackage(name, folder, filename):
     return True
   return False
 
-def patchSourceFile(sourceFile, patchFile):
+def patchSourceFile(sourceFile, patchFile, throw=True):
   if not os.path.isabs(sourceFile):
     sourceFile = os.path.join(build, sourceFile)
   if not os.path.isabs(patchFile):
     patchFile = os.path.join(root, 'patches', patchFile)
-  cmd = ['patch', sourceFile, patchFile]
+  cmd = ['patch', '-N', sourceFile, patchFile]
   p = subprocess.Popen(cmd, cwd=os.path.split(sourceFile)[0])
   p.wait()
-  if p.returncode != 0:
+  if p.returncode != 0 and throw:
     raise Exception('patchSourceFile failed')
 
 def insertCMakeProlog(sourcepath):
@@ -161,8 +161,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build'):
 
 def stageResults(name, includeFolders, libraryFolders):
   sources = {
-    'include': [includeFolders, ['h', 'hpp']],
-    'lib': [libraryFolders, ['lib']]
+    'include': [includeFolders, ['h', 'hpp', 'ipp']],
+    'lib': [libraryFolders, ['lib', 'dll', 'so', 'dylib']]
   }
 
   for key in sources:
@@ -425,9 +425,9 @@ if requiresBuild('alembic', excludeFromAllTarget=True):
     os.path.join(build, 'alembic', 'build', 'lib')
     ])
 
-#======================================== opensubdiv =================================
+#========================================   usd    =================================
 
-if requiresBuild('usd'):
+if requiresBuild('usd-static', excludeFromAllTarget=False):
 
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
@@ -435,6 +435,13 @@ if requiresBuild('usd'):
 
   # replace the cmakelists file
   shutil.copyfile(os.path.join(root, 'patches', 'USD', 'CMakeLists.txt'), os.path.join(sourcepath, 'CMakeLists.txt'))
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'usd/sdf.layer.h.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'usd/vt.value.h.patch', throw=False)
+
+  # copy the dll main entry point
+  shutil.copyfile(os.path.join(root, 'patches', 'USD', 'dllmain.cpp'), os.path.join(sourcepath, 'dllmain.cpp'))
+
+  # STATIC BUILD =============================================================================
 
   includePath = os.path.join(build, 'USD', 'build', 'include')
   for foldername in ['base', 'usd', 'imaging', 'usdImaging']:
@@ -471,30 +478,80 @@ if requiresBuild('usd'):
     os.path.join(build, 'USD', 'build', 'Release')
     ])
 
-  # runCMake('USD', sourcepath, [],
-  #   flags = {
-  #     'BOOST_INCLUDEDIR': boostincludepath,
-  #     'BOOST_LIBRARYDIR': boostlibrarypath,
-  #     'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
-  #     'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-  #     'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
-  #     'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
+  marker = os.path.join(build, 'USD', '.usd-static.marker')
+  open(marker, 'wb').write('done')
 
-  #     'MSVC_RUNTIME' : 'static',
+  # END STATIC BUILD =========================================================================
 
-  #     'PXR_STRICT_BUILD_MODE': 'off',
-  #     'PXR_VALIDATE_GENERATED_CODE': 'off',
-  #     'PXR_BUILD_TESTS': 'off',
-  #     'PXR_BUILD_IMAGING': 'off',
-  #     'PXR_BUILD_USD_IMAGING': 'off',
-  #     'PXR_BUILD_KATANA_PLUGIN': 'off',
-  #     'PXR_BUILD_MAYA_PLUGIN': 'off',
-  #     'PXR_BUILD_ALEMBIC_PLUGIN': 'off',
-  #     'PXR_ENABLE_MULTIVERSE_SUPPORT': 'off',
-  #     'PXR_MAYA_TBB_BUG_WORKAROUND': 'off',
-  #     'PXR_ENABLE_NAMESPACES': 'off',
-  #   })
+if requiresBuild('usd-dynamic', excludeFromAllTarget=True):
 
+  sourcepath = os.path.join(root, 'USD')
+  if not os.path.exists(sourcepath):
+    raise Exception('Need to clone USD to %s' % sourcepath)
+
+  # replace the cmakelists file
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'usd/sdf.layer.h.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'usd/vt.value.h.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'usd/plug.CMakeLists.txt.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'usd/Packages.cmake.patch', throw=False)
+
+  # DYNAMIC BUILD ========================================================================
+
+  runCMake('USD', sourcepath, [
+      'pxr/base/lib/arch/arch',
+      'pxr/base/lib/gf/gf',
+      'pxr/base/lib/js/js',
+      'pxr/base/lib/plug/plug',
+      'pxr/base/lib/tf/tf',
+      'pxr/base/lib/tracelite/tracelite',
+      'pxr/base/lib/vt/vt',
+      'pxr/base/lib/work/work',
+      'pxr/usd/lib/ar/ar',
+      'pxr/usd/lib/kind/kind',
+      'pxr/usd/lib/pcp/pcp',
+      'pxr/usd/lib/sdf/sdf',
+      'pxr/usd/lib/usd/usd',
+      'pxr/usd/lib/usdGeom/usdGeom',
+      'pxr/usd/lib/usdHydra/usdHydra',
+      'pxr/usd/lib/usdRi/usdRi',
+      'pxr/usd/lib/usdShade/usdShade',
+      'pxr/usd/lib/usdUI/usdUI',
+      'pxr/usd/lib/usdUtils/usdUtils',
+    ],
+    flags = {
+      'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
+      'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
+      'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
+      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
+      'TBB_LIBRARY': os.path.join(stage, 'lib', 'tbb_static.lib'),
+      'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
+      'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
+      'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half.lib'),
+
+      'PXR_STRICT_BUILD_MODE': 'off',
+      'PXR_LIB_PREFIX': '',
+      'PXR_VALIDATE_GENERATED_CODE': 'off',
+      'PXR_BUILD_TESTS': 'off',
+      'PXR_BUILD_IMAGING': 'off',
+      'PXR_BUILD_USD_IMAGING': 'off',
+      'PXR_BUILD_KATANA_PLUGIN': 'off',
+      'PXR_BUILD_MAYA_PLUGIN': 'off',
+      'PXR_BUILD_ALEMBIC_PLUGIN': 'off',
+      'PXR_ENABLE_MULTIVERSE_SUPPORT': 'off',
+      'PXR_MAYA_TBB_BUG_WORKAROUND': 'off',
+      'PXR_ENABLE_NAMESPACES': 'off',
+    })
+
+  stageResults('usd', [
+    os.path.join(build, 'USD', 'build', 'include')
+    ], [
+    os.path.join(build, 'USD', 'build')
+    ])
+
+  marker = os.path.join(build, 'USD', '.usd-dynamic.marker')
+  open(marker, 'wb').write('done')
+
+  # END DYNAMIC BUILD ====================================================================
 
 # not needed:
 # oiio-Release-1.5.20.tar.gz ?
