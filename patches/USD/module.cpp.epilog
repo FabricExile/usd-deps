@@ -1,0 +1,29 @@
+
+#include <windows.h>
+#include <stdio.h>
+
+PXR_NAMESPACE_OPEN_SCOPE
+
+// depsfunc
+
+BOOL WINAPI DllMain(
+  _In_ HINSTANCE hinstDLL,
+  _In_ DWORD     fdwReason,
+  _In_ LPVOID    lpvReserved
+) {
+  switch( fdwReason ) 
+  { 
+    case DLL_PROCESS_ATTACH:
+    {
+      printf("calling wrapModule!\n");
+      // loadModuleDependencies();
+      wrapModule();
+      printf("called wrapModule!\n");
+
+      break;
+    }
+  }
+  return TRUE;
+}
+
+PXR_NAMESPACE_CLOSE_SCOPE

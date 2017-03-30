@@ -1,0 +1,12 @@
+--- USD/pxr/usd/CMakeLists.txt	Tue Mar 21 08:52:29 2017
++++ /c/temp/usd.CMakeLists.txt	Thu Mar 30 11:27:05 2017
+@@ -1,7 +1,7 @@
+ set(DIRS
+     lib
+-    bin
+-    plugin
++    # bin
++    # plugin
+ )
+ 
+ foreach(d ${DIRS})

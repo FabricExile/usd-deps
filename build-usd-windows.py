@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import glob
 import shutil
@@ -24,7 +25,8 @@ allowedTargets = [
   'ptex',
   'opensubdiv',
   'alembic',
-  'usd',
+  'usd-static',
+  'usd-dynamic',
 ]
 if not target in allowedTargets:
   print """
@@ -91,6 +93,7 @@ def patchSourceFile(sourceFile, patchFile, throw=True):
     sourceFile = os.path.join(build, sourceFile)
   if not os.path.isabs(patchFile):
     patchFile = os.path.join(root, 'patches', patchFile)
+
   cmd = ['patch', '-N', sourceFile, patchFile]
   p = subprocess.Popen(cmd, cwd=os.path.split(sourceFile)[0])
   p.wait()
@@ -427,7 +430,7 @@ if requiresBuild('alembic', excludeFromAllTarget=True):
 
 #========================================   usd    =================================
 
-if requiresBuild('usd-static', excludeFromAllTarget=False):
+if requiresBuild('usd-static', excludeFromAllTarget=True):
 
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
@@ -437,9 +440,6 @@ if requiresBuild('usd-static', excludeFromAllTarget=False):
   shutil.copyfile(os.path.join(root, 'patches', 'USD', 'CMakeLists.txt'), os.path.join(sourcepath, 'CMakeLists.txt'))
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'usd/sdf.layer.h.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'usd/vt.value.h.patch', throw=False)
-
-  # copy the dll main entry point
-  shutil.copyfile(os.path.join(root, 'patches', 'USD', 'dllmain.cpp'), os.path.join(sourcepath, 'dllmain.cpp'))
 
   # STATIC BUILD =============================================================================
 
@@ -483,40 +483,44 @@ if requiresBuild('usd-static', excludeFromAllTarget=False):
 
   # END STATIC BUILD =========================================================================
 
-if requiresBuild('usd-dynamic', excludeFromAllTarget=True):
+if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
 
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
     raise Exception('Need to clone USD to %s' % sourcepath)
 
   # replace the cmakelists file
-  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'usd/sdf.layer.h.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'usd/vt.value.h.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'usd/plug.CMakeLists.txt.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'usd/Packages.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'USD/sdf.layer.h.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'USD/vt.value.h.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'USD/plug.CMakeLists.txt.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'msvcdefaults.cmake'), 'USD/msvcdefaults.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'CMakeLists.txt'), 'USD/usd.CMakeLists.txt.patch', throw=False)
 
   # DYNAMIC BUILD ========================================================================
 
   runCMake('USD', sourcepath, [
-      'pxr/base/lib/arch/arch',
-      'pxr/base/lib/gf/gf',
-      'pxr/base/lib/js/js',
-      'pxr/base/lib/plug/plug',
-      'pxr/base/lib/tf/tf',
-      'pxr/base/lib/tracelite/tracelite',
-      'pxr/base/lib/vt/vt',
-      'pxr/base/lib/work/work',
-      'pxr/usd/lib/ar/ar',
-      'pxr/usd/lib/kind/kind',
-      'pxr/usd/lib/pcp/pcp',
-      'pxr/usd/lib/sdf/sdf',
-      'pxr/usd/lib/usd/usd',
-      'pxr/usd/lib/usdGeom/usdGeom',
-      'pxr/usd/lib/usdHydra/usdHydra',
-      'pxr/usd/lib/usdRi/usdRi',
-      'pxr/usd/lib/usdShade/usdShade',
-      'pxr/usd/lib/usdUI/usdUI',
-      'pxr/usd/lib/usdUtils/usdUtils',
+      'INSTALL',
+      # 'pxr/base/lib/arch/arch',
+      # 'pxr/base/lib/gf/gf',
+      # 'pxr/base/lib/js/js',
+      # 'pxr/base/lib/plug/plug',
+      # 'pxr/base/lib/tf/tf',
+      # 'pxr/base/lib/tracelite/tracelite',
+      # 'pxr/base/lib/vt/vt',
+      # 'pxr/base/lib/work/work',
+      # 'pxr/usd/lib/ar/ar',
+      # 'pxr/usd/lib/kind/kind',
+      # 'pxr/usd/lib/pcp/pcp',
+      # 'pxr/usd/lib/sdf/sdf',
+      # 'pxr/usd/lib/usd/usd',
+      # 'pxr/usd/lib/usdGeom/usdGeom',
+      # 'pxr/usd/lib/usdHydra/usdHydra',
+      # 'pxr/usd/lib/usdRi/usdRi',
+      # 'pxr/usd/lib/usdShade/usdShade',
+      # 'pxr/usd/lib/usdUI/usdUI',
+      # 'pxr/usd/lib/usdUtils/usdUtils',
     ],
     flags = {
       'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
@@ -540,6 +544,9 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=True):
       'PXR_ENABLE_MULTIVERSE_SUPPORT': 'off',
       'PXR_MAYA_TBB_BUG_WORKAROUND': 'off',
       'PXR_ENABLE_NAMESPACES': 'off',
+
+      'PXR_INSTALL_LOCATION': stage,
+      'CMAKE_INSTALL_PREFIX': stage,
     })
 
   stageResults('usd', [

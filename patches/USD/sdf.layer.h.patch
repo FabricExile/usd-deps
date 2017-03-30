@@ -1,0 +1,15 @@
+--- layer.h	Wed Mar 22 09:19:25 2017
++++ /c/temp/layer.h	Wed Mar 22 19:35:30 2017
+@@ -656,9 +656,9 @@
+     /// Return a list of the keys of the (sub) dictionary identified by
+     /// \p keyPath.  The \p keyPath is a ':'-separated path addressing an
+     /// element in sub-dictionaries.
+-    SDF_API
+-    std::vector<TfToken> ListFieldDictKeys(const SdfPath& path,
+-                                           const TfToken &keyPath) const;
++    // SDF_API
++    // std::vector<TfToken> ListFieldDictKeys(const SdfPath& path,
++    //                                        const TfToken &keyPath) const;
+ 
+     template <class T>
+     bool HasField(const SdfPath& path,

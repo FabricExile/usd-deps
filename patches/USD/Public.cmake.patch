@@ -1,0 +1,29 @@
+--- public.cmake	Thu Mar 30 11:00:51 2017
++++ /e/usd-deps/USD/cmake/macros/Public.cmake	Thu Mar 30 10:55:18 2017
+@@ -411,16 +411,16 @@
+         )
+     endif()
+ 
+-    # Build python module.
+-    if(DEFINED sl_PYMODULE_CPPFILES)
+-        pxr_shared_library(
+-            "_${LIBRARY_NAME}"
+-            PYTHON_LIBRARY
+-            PYTHON_WRAPPED_LIB_PREFIX ${LIB_INSTALL_PREFIX}
+-            CPPFILES ${sl_PYMODULE_CPPFILES}
+-            LIBRARIES ${LIBRARY_NAME}
+-        )
+-    endif()
++    # # Build python module.
++    # if(DEFINED sl_PYMODULE_CPPFILES)
++    #     pxr_shared_library(
++    #         "_${LIBRARY_NAME}"
++    #         PYTHON_LIBRARY
++    #         PYTHON_WRAPPED_LIB_PREFIX ${LIB_INSTALL_PREFIX}
++    #         CPPFILES ${sl_PYMODULE_CPPFILES}
++    #         LIBRARIES ${LIBRARY_NAME}
++    #     )
++    # endif()
+ 
+     _get_library_file(${LIBRARY_NAME} LIBRARY_FILE)
+ 
