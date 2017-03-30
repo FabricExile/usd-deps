@@ -549,12 +549,6 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
       'CMAKE_INSTALL_PREFIX': stage,
     })
 
-  stageResults('usd', [
-    os.path.join(build, 'USD', 'build', 'include')
-    ], [
-    os.path.join(build, 'USD', 'build')
-    ])
-
   marker = os.path.join(build, 'USD', '.usd-dynamic.marker')
   open(marker, 'wb').write('done')
 
