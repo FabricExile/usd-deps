@@ -2,3 +2,6 @@ build/
 stage/
 /USD
 boost/
+*.exe
+*.obj
+*.dblite

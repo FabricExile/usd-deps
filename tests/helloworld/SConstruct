@@ -1,0 +1,83 @@
+import os
+import glob
+import platform
+from distutils import sysconfig
+
+env = Environment(MSVC_VERSION = '14.0')
+
+stage = os.path.abspath(env.Dir('.').abspath)
+stage = os.path.split(stage)[0]
+stage = os.path.split(stage)[0]
+stage = os.path.join(stage, 'stage')
+
+env.Append(CPPPATH = [os.path.join(stage, 'include')])
+env.Append(CPPPATH = [os.path.join(stage, 'include', 'tbb')])
+env.Append(CPPPATH = [sysconfig.get_python_inc()])
+env.Append(LIBPATH = [os.path.join(stage, 'lib')])
+
+if platform.system() == 'Windows':
+  env.Append(LIBPATH = [os.path.join(sysconfig.get_config_vars()['prefix'], 'libs')])
+else:
+  env.Append(LIBPATH = [sysconfig.get_python_lib(plat_specific=True, standard_lib=True)])
+
+env.Append(LIBS = [
+  'arch',
+  'gf',
+  'js',
+  'plug',
+  'tf',
+  'tracelite',
+  'vt',
+  'work',
+  'ar',
+  'kind',
+  'pcp',
+  'sdf',
+  'usd',
+  'usdGeom',
+  'usdHydra',
+  'usdRi',
+  'usdShade',
+  'usdUI',
+  'usdUtils',
+  ])
+
+boostlibs = ['date_time', 'iostreams', 'program_options', 'python', 'regex', 'system']
+if platform.system() == 'Windows':
+
+  # disable boost autolinking
+  env.Append(CPPDEFINES = ["BOOST_ALL_NO_LIB"])
+  env.Append(CPPDEFINES = ["BOOST_PYTHON_STATIC_LIB"])
+
+  boostLibs = glob.glob(os.path.join(stage, 'lib', '*boost*.lib'))
+  if len(boostLibs) == 0:
+    raise Exception('No boost libraries found in %s' % os.environ['USD_DEPS_ROOT'])
+
+  boosttemplate = os.path.split(boostLibs[0])[1]
+  boosttemplate = boosttemplate.rpartition('.')[0].split('-')
+  boostmsvc = boosttemplate[1]
+  boostversion = boosttemplate[4]
+
+  env.Append(CPPDEFINES = ['USE_STATIC_BOOST=yes'])
+
+  for boostlib in boostlibs:
+    env.Append(LIBS = ['libboost_%s-%s-mt-s-%s' % (boostlib, boostmsvc, boostversion)])
+else:
+  for boostlib in boostlibs:
+    env.Append(LIBS = ['boost_%s' % boostlib])
+
+env.Append(CPPDEFINES = [
+  'BUILD_OPTLEVEL_OPT',
+  'BUILD_COMPONENT_SRC_PREFIX=""',
+  'BOOST_ALL_NO_LIB',
+  'BOOST_PYTHON_STATIC_LIB',
+  'NOMINMAX',
+  'TF_NO_GNU_EXT',
+  'YY_NO_UNISTD_H',
+  ])
+
+sources = Glob('*.cpp')
+
+p = env.Program('helloworld', sources)
+
+env.Default(p)

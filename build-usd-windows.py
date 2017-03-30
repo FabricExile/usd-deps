@@ -119,18 +119,18 @@ def insertCMakeProlog(sourcepath):
   for override in ['c_flag_overrides.cmake', 'cxx_flag_overrides.cmake']:
     shutil.copyfile(os.path.join(root, 'patches', override), os.path.join(sourcepath, override))
 
-def runMSBuild(project, buildpath):
+def runMSBuild(project, buildpath, configuration='Release'):
   env = {}
   env.update(os.environ)
   env['PATH'] = env['PATH'] + os.pathsep + vspath
   env['VCTargetsPath'] = r'C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V%s0' % vsversion
-  cmd = [msbuild, project, '/t:build', '/p:Configuration=Release', '/p:Configuration=Release', '/p:Platform=x64']
+  cmd = [msbuild, project, '/t:build', '/p:Configuration=%s' % configuration, '/p:Platform=x64']
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
     raise Exception('runMSBuild failed')
 
-def runCMake(name, folder, projects, flags={}, env={}, subfolder='build'):
+def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, name, sourcepath)
@@ -157,7 +157,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build'):
     raise Exception('runCMake failed')
 
   for project in projects:
-    runMSBuild('%s.vcxproj' % project, buildpath)
+    runMSBuild('%s.vcxproj' % project, buildpath, configuration=configuration)
 
   marker = os.path.join(build, name, '.'+name+'.marker')
   open(marker, 'wb').write('done')
@@ -252,7 +252,7 @@ if requiresBuild('tbb', ['opensubdiv']):
   if extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz'):
     patchSourceFile('tbb/tbb-tbb43u6/include/tbb/tbb_config.h', 'tbb/tbb_config.h.patch')
 
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb', 'tbbmalloc_static', 'tbbmalloc_proxy_static', 'tbb_static'])
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'])
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
@@ -500,6 +500,8 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
 
   # DYNAMIC BUILD ========================================================================
 
+  # tbbDir = os.path.join(os.environ['FABRIC_SCENE_GRAPH_DIR'], 'ThirdParty', 'PreBuilt', 'Windows', 'x86_64', 'tbb')
+
   runCMake('USD', sourcepath, [
       'INSTALL',
       # 'pxr/base/lib/arch/arch',
@@ -527,7 +529,7 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
       'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'TBB_LIBRARY': os.path.join(stage, 'lib', 'tbb_static.lib'),
+      'TBB_LIBRARY': os.path.join(stage, 'lib', 'lib'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
       'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half.lib'),
@@ -547,7 +549,10 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
 
       'PXR_INSTALL_LOCATION': stage,
       'CMAKE_INSTALL_PREFIX': stage,
-    })
+
+      # 'CMAKE_BUILD_TYPE': 'RELWITHDEBINFO',
+    },
+    configuration='RelWithDebInfo')
 
   marker = os.path.join(build, 'USD', '.usd-dynamic.marker')
   open(marker, 'wb').write('done')
