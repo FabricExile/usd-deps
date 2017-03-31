@@ -1,7 +1,0 @@
-# if(MSVC)
-#     set(CMAKE_CXX_FLAGS_DEBUG_INIT "/D_DEBUG /MTd")
-#     set(CMAKE_CXX_FLAGS_MINSIZEREL_INIT     "/MT")
-#     set(CMAKE_CXX_FLAGS_RELEASE_INIT        "/MT")
-#     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "/MT")
-# endif()
-

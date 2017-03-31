@@ -41,15 +41,31 @@ target: %s
 root = os.path.abspath(os.path.split(__file__)[0])
 build = os.path.join(root, 'build')
 stage = os.path.join(root, 'stage')
-vsversion = '14'
-vspath = r"C:\Program Files (x86)\Microsoft Visual Studio %s.0\Common7\IDE" % vsversion
-msbuild = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe"
-ucrtpath = r'C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0'
 
-if not os.path.exists(msbuild):
-  raise Exception('msbuildpath not found')
-if not os.path.exists(ucrtpath):
-  raise Exception('ucrtpath not found')
+if platform.system() == 'Windows':
+  vsversion = '14'
+  vspath = r"C:\Program Files (x86)\Microsoft Visual Studio %s.0\Common7\IDE" % vsversion
+
+  frameworks = glob.glob(r"C:\Windows\Microsoft.NET\Framework64\*")
+  msframework = ''
+  for fw in frameworks:
+    f = os.path.split(fw)[1]
+    if not f.startswith('v4.'):
+      continue
+    if fw > msframework:
+      msframework = fw
+  msbuild = r"%s\msbuild.exe" % msframework
+
+  ucrtpath = ''
+  ucrtpaths = glob.glob(r'C:\Program Files (x86)\Windows Kits\10\Include\*')
+  for p in ucrtpaths:
+    if p > ucrtpath:
+      ucrtpath = p
+
+  if not os.path.exists(msbuild):
+    raise Exception('msbuildpath not found')
+  if not os.path.exists(ucrtpath):
+    raise Exception('ucrtpath not found')
 
 #========================================= clean =====================================
 if target in ['clean']:
@@ -100,31 +116,6 @@ def patchSourceFile(sourceFile, patchFile, throw=True):
   if p.returncode != 0 and throw:
     raise Exception('patchSourceFile failed')
 
-def insertCMakeProlog(sourcepath, name='default'):
-  if not os.path.isabs(sourcepath):
-    sourcepath = os.path.join(build, sourcepath)
-  sourcefile = os.path.join(sourcepath, 'CMakeLists.txt')
-  content = None
-  with open(sourcefile, 'rb') as f:
-    content = f.read()
-
-  prolog = """
-set(CMAKE_USER_MAKE_RULES_OVERRIDE
-    ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides_%s.cmake)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
-    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_flag_overrides_%s.cmake)
-""" % (name, name)
-
-  if not content.startswith(prolog):
-    with open(sourcefile, 'wb') as f:
-      f.write(prolog + content)
-
-  for override in [
-    'c_flag_overrides_%s.cmake' % name,
-    'cxx_flag_overrides_%s.cmake' % name,
-    ]:
-    shutil.copyfile(os.path.join(root, 'patches', override), os.path.join(sourcepath, override))
-
 def runMSBuild(project, buildpath, configuration='Release'):
   env = {}
   env.update(os.environ)
@@ -136,7 +127,7 @@ def runMSBuild(project, buildpath, configuration='Release'):
   if p.returncode != 0:
     raise Exception('runMSBuild failed')
 
-def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release', cmakeProlog='default'):
+def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, name, sourcepath)
@@ -145,9 +136,6 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     os.makedirs(buildpath)
 
   env.update(os.environ)
-
-  # if cmakeProlog:
-  #   insertCMakeProlog(sourcepath, name=cmakeProlog)
 
   # cmd = ['cmake', "--trace", "--debug-output", "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
   # cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
@@ -163,8 +151,11 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
   if p.returncode != 0:
     raise Exception('runCMake failed')
 
-  for project in projects:
-    runMSBuild('%s.vcxproj' % project, buildpath, configuration=configuration)
+  if platform.system() == 'Windows':
+    for project in projects:
+      runMSBuild('%s.vcxproj' % project, buildpath, configuration=configuration)
+  else:
+    raise Exception('not implemented yet')
 
   marker = os.path.join(build, name, '.'+name+'.marker')
   open(marker, 'wb').write('done')
@@ -199,7 +190,7 @@ def stageResults(name, includeFolders, libraryFolders):
 
 if requiresBuild('zlib'):
   extractSourcePackage('zlib', 'zlib-1.2.11', 'zlib-1.2.11.zip')
-  runCMake('zlib', 'zlib-1.2.11', ['zlibstatic'], cmakeProlog='minimal')
+  runCMake('zlib', 'zlib-1.2.11', ['zlibstatic'])
 
   stageResults('zlib', [
     os.path.join(build, 'zlib', 'zlib-1.2.11'),
@@ -216,7 +207,8 @@ if requiresBuild('boost'):
 
   env = {}
   env.update(os.environ)
-  env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
+  if platform.system() == 'Windows':
+    env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
 
   extractSourcePackage('boost', 'boost_1_63_0', 'boost_1_63_0.tar.bz2')
   if platform.system() == 'Windows':
@@ -434,68 +426,12 @@ if requiresBuild('alembic', excludeFromAllTarget=True):
     os.path.join(build, 'alembic', 'build', 'lib')
     ])
 
-#========================================   usd    =================================
-
-if requiresBuild('usd-static', excludeFromAllTarget=True):
+if requiresBuild('usd', excludeFromAllTarget=False):
 
   sourcepath = os.path.join(root, 'USD')
   if not os.path.exists(sourcepath):
     raise Exception('Need to clone USD to %s' % sourcepath)
 
-  # replace the cmakelists file
-  shutil.copyfile(os.path.join(root, 'patches', 'USD', 'CMakeLists.txt'), os.path.join(sourcepath, 'CMakeLists.txt'))
-  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'usd/sdf.layer.h.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'usd/vt.value.h.patch', throw=False)
-
-  # STATIC BUILD =============================================================================
-
-  includePath = os.path.join(build, 'USD', 'build', 'include')
-  for foldername in ['base', 'usd', 'imaging', 'usdImaging']:
-    folder = os.path.join(root, 'USD', 'pxr', foldername, 'lib')
-    for r, dirs, files in os.walk(folder):
-      for f in files:
-        if not f.rpartition('.')[2].lower() in ['h']:
-          continue
-        path = os.path.join(r, f)
-        relpath = os.path.relpath(path, folder)
-        abspath = os.path.join(includePath, 'pxr', foldername, relpath)
-        absfolder = os.path.split(abspath)[0]
-        if not os.path.exists(absfolder):
-          os.makedirs(absfolder)
-        shutil.copy(path, abspath)
-
-  runCMake('USD', sourcepath, ['usd_static'],
-    flags = {
-      'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
-      'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
-      'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
-      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
-      'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
-      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
-      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
-
-      'PXR_USE_NAMESPACES': 'off',
-    })
-
-  stageResults('usd', [
-    os.path.join(build, 'USD', 'build', 'include')
-    ], [
-    os.path.join(build, 'USD', 'build', 'Release')
-    ])
-
-  marker = os.path.join(build, 'USD', '.usd-static.marker')
-  open(marker, 'wb').write('done')
-
-  # END STATIC BUILD =========================================================================
-
-if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
-
-  sourcepath = os.path.join(root, 'USD')
-  if not os.path.exists(sourcepath):
-    raise Exception('Need to clone USD to %s' % sourcepath)
-
-  # replace the cmakelists file
   patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'USD/sdf.layer.h.patch', throw=False)
@@ -505,31 +441,8 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'USD/plug.CMakeLists.txt.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'CMakeLists.txt'), 'USD/usd.CMakeLists.txt.patch', throw=False)
 
-  # DYNAMIC BUILD ========================================================================
-
-  # tbbDir = os.path.join(os.environ['FABRIC_SCENE_GRAPH_DIR'], 'ThirdParty', 'PreBuilt', 'Windows', 'x86_64', 'tbb')
-
   runCMake('USD', sourcepath, [
       'INSTALL',
-      # 'pxr/base/lib/arch/arch',
-      # 'pxr/base/lib/gf/gf',
-      # 'pxr/base/lib/js/js',
-      # 'pxr/base/lib/plug/plug',
-      # 'pxr/base/lib/tf/tf',
-      # 'pxr/base/lib/tracelite/tracelite',
-      # 'pxr/base/lib/vt/vt',
-      # 'pxr/base/lib/work/work',
-      # 'pxr/usd/lib/ar/ar',
-      # 'pxr/usd/lib/kind/kind',
-      # 'pxr/usd/lib/pcp/pcp',
-      # 'pxr/usd/lib/sdf/sdf',
-      # 'pxr/usd/lib/usd/usd',
-      # 'pxr/usd/lib/usdGeom/usdGeom',
-      # 'pxr/usd/lib/usdHydra/usdHydra',
-      # 'pxr/usd/lib/usdRi/usdRi',
-      # 'pxr/usd/lib/usdShade/usdShade',
-      # 'pxr/usd/lib/usdUI/usdUI',
-      # 'pxr/usd/lib/usdUtils/usdUtils',
     ],
     flags = {
       'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
@@ -556,23 +469,5 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
 
       'PXR_INSTALL_LOCATION': stage,
       'CMAKE_INSTALL_PREFIX': stage,
-
-      # 'CMAKE_BUILD_TYPE': 'RELWITHDEBINFO',
     },
-    configuration='RelWithDebInfo')
-
-  marker = os.path.join(build, 'USD', '.usd-dynamic.marker')
-  open(marker, 'wb').write('done')
-
-  # END DYNAMIC BUILD ====================================================================
-
-# not needed:
-# oiio-Release-1.5.20.tar.gz ?
-# flex-2.5.39.tar.bz2
-# PyOpenGL-3.0.2.tar.gz
-# Python-2.7.12.tgz
-# pyilmbase-2.2.0.tar.gz
-# pyside-qt4.8+1.2.2.tar.bz2
-# pyside-tools-0.2.15.tar.gz
-# qt-everywhere-opensource-src-4.8.6.tar.gz
-# shiboken-1.2.2.tar.bz2
+    configuration='Release') # RelWithDebInfo
