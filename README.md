@@ -14,7 +14,7 @@ This package is licensed under a three-clause BSD license, contained in the file
 
 ## Important Notes
 
-- Latest supported commit is 019a65f331bed50fe496fc476abe1dd41e1cd795
+- Latest supported commit is 5eeb735f84ace9861ddd5e03b079efd5d0c6be44
 
 - This is currently Linux-only since USD is Linux-only
 

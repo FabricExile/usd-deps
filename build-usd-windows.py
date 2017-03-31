@@ -100,23 +100,29 @@ def patchSourceFile(sourceFile, patchFile, throw=True):
   if p.returncode != 0 and throw:
     raise Exception('patchSourceFile failed')
 
-def insertCMakeProlog(sourcepath):
+def insertCMakeProlog(sourcepath, name='default'):
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, sourcepath)
   sourcefile = os.path.join(sourcepath, 'CMakeLists.txt')
-  prologfile = os.path.join(root, 'patches', 'CMakeLists.txt.prolog')
   content = None
   with open(sourcefile, 'rb') as f:
     content = f.read()
-  prolog = None
-  with open(prologfile, 'rb') as f:
-    prolog = f.read()
+
+  prolog = """
+set(CMAKE_USER_MAKE_RULES_OVERRIDE
+    ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides_%s.cmake)
+set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
+    ${CMAKE_CURRENT_SOURCE_DIR}/cxx_flag_overrides_%s.cmake)
+""" % (name, name)
 
   if not content.startswith(prolog):
     with open(sourcefile, 'wb') as f:
       f.write(prolog + content)
 
-  for override in ['c_flag_overrides.cmake', 'cxx_flag_overrides.cmake']:
+  for override in [
+    'c_flag_overrides_%s.cmake' % name,
+    'cxx_flag_overrides_%s.cmake' % name,
+    ]:
     shutil.copyfile(os.path.join(root, 'patches', override), os.path.join(sourcepath, override))
 
 def runMSBuild(project, buildpath, configuration='Release'):
@@ -130,7 +136,7 @@ def runMSBuild(project, buildpath, configuration='Release'):
   if p.returncode != 0:
     raise Exception('runMSBuild failed')
 
-def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
+def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release', cmakeProlog='default'):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, name, sourcepath)
@@ -140,7 +146,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
 
   env.update(os.environ)
 
-  insertCMakeProlog(sourcepath)
+  # if cmakeProlog:
+  #   insertCMakeProlog(sourcepath, name=cmakeProlog)
 
   # cmd = ['cmake', "--trace", "--debug-output", "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
   # cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
@@ -191,9 +198,8 @@ def stageResults(name, includeFolders, libraryFolders):
 #========================================= zlib ====================================
 
 if requiresBuild('zlib'):
-  # tbb on windows uses a drop from https://github.com/wjakob/tbb/tree/tbb43u6
   extractSourcePackage('zlib', 'zlib-1.2.11', 'zlib-1.2.11.zip')
-  runCMake('zlib', 'zlib-1.2.11', ['zlibstatic'])
+  runCMake('zlib', 'zlib-1.2.11', ['zlibstatic'], cmakeProlog='minimal')
 
   stageResults('zlib', [
     os.path.join(build, 'zlib', 'zlib-1.2.11'),
@@ -490,12 +496,11 @@ if requiresBuild('usd-dynamic', excludeFromAllTarget=False):
     raise Exception('Need to clone USD to %s' % sourcepath)
 
   # replace the cmakelists file
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'USD/sdf.layer.h.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'vt', 'value.h'), 'USD/vt.value.h.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'USD/plug.CMakeLists.txt.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'msvcdefaults.cmake'), 'USD/msvcdefaults.cmake.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'CMakeLists.txt'), 'USD/usd.CMakeLists.txt.patch', throw=False)
 
   # DYNAMIC BUILD ========================================================================
