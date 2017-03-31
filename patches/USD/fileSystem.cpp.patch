@@ -1,0 +1,15 @@
+--- fileSystem.cpp	Fri Mar 31 12:33:49 2017
++++ /c/temp/fileSystem.cpp	Fri Mar 31 12:33:28 2017
+@@ -654,6 +654,12 @@
+             }
+             CloseHandle(token);
+         }
++        else
++        {
++          // if the file doesn't exist and we are asking for write access - that's fine
++          if(mode == W_OK)
++              result = true;
++        }
+     }
+     return result ? 0 : -1;
+ }
