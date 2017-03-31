@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import stat
 import glob
 import shutil
 import platform
@@ -127,6 +128,22 @@ def runMSBuild(project, buildpath, configuration='Release'):
   if p.returncode != 0:
     raise Exception('runMSBuild failed')
 
+def runMake(project, buildpath):
+  env = {}
+  env.update(os.environ)
+
+  if platform.system() == 'Windows':
+    if project == 'install':
+      project = 'INSTALL'
+    if project == 'all':
+      project = 'ALL_BUILD'
+
+  cmd = ['make', project, '-j', '4']
+  p = subprocess.Popen(cmd, cwd=buildpath, env=env)
+  p.wait()
+  if p.returncode != 0:
+    raise Exception('runMake failed')
+
 def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
@@ -139,7 +156,10 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
 
   # cmd = ['cmake', "--trace", "--debug-output", "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
   # cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
-  cmd = ['cmake', "-G", "Visual Studio %s" % vsversion, sourcepath]
+  if platform.system() == 'Windows':
+    cmd = ['cmake', "-G", "Visual Studio %s" % vsversion, sourcepath]
+  else:
+    cmd = ['cmake', sourcepath]
   for flag in flags:
     cmd += ['-D%s=%s' % (flag, flags[flag])]
 
@@ -155,7 +175,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     for project in projects:
       runMSBuild('%s.vcxproj' % project, buildpath, configuration=configuration)
   else:
-    raise Exception('not implemented yet')
+    for project in projects:
+      runMake(project, buildpath)
 
   marker = os.path.join(build, name, '.'+name+'.marker')
   open(marker, 'wb').write('done')
@@ -163,7 +184,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
 def stageResults(name, includeFolders, libraryFolders):
   sources = {
     'include': [includeFolders, ['h', 'hpp', 'ipp']],
-    'lib': [libraryFolders, ['lib', 'dll', 'so', 'dylib']]
+    'lib': [libraryFolders, ['lib', 'dll', 'so', 'dylib', 'a']]
   }
 
   for key in sources:
@@ -196,13 +217,16 @@ if requiresBuild('zlib'):
     os.path.join(build, 'zlib', 'zlib-1.2.11'),
     os.path.join(build, 'zlib', 'build')
     ], [
-    os.path.join(build, 'zlib', 'build', 'Release')
+    os.path.join(build, 'zlib', 'build')
     ])
 
 #========================================= boost ====================================
 
 if requiresBuild('boost'):
-  sourcepath = os.path.join(build, 'boost', 'boost_1_63_0')
+  boostversion = 'boost_1_55_0'
+  if platform.system() == 'Windows':
+    boostversion = 'boost_1_63_0'
+  sourcepath = os.path.join(build, 'boost', boostversion)
   buildpath = os.path.join(build, 'boost', 'build')
 
   env = {}
@@ -210,7 +234,7 @@ if requiresBuild('boost'):
   if platform.system() == 'Windows':
     env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
 
-  extractSourcePackage('boost', 'boost_1_63_0', 'boost_1_63_0.tar.bz2')
+  extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion)
   if platform.system() == 'Windows':
 
     content = None
@@ -231,14 +255,31 @@ if requiresBuild('boost'):
       raise Exception('building boost failed')
 
   else:
-    raise Exception('implement running b2 some other way')
-    # you may want to look into the build_boost.bat in patches
+
+    content = None
+    with open(os.path.join(root, 'patches', 'boost', 'build_boost.sh'), 'rb') as f:
+      content = f.read()
+
+    content = content.replace('{{SOURCEPATH}}', sourcepath)
+    content = content.replace('{{BUILDPATH}}', buildpath)
+    content = content.replace('{{STAGEPATH}}', stage)
+
+    with open(os.path.join(sourcepath, 'build_boost.sh'), 'wb') as f:
+      f.write(content)
+
+    p = subprocess.Popen(['chmod', '+x', os.path.join(sourcepath, 'build_boost.sh')])
+    p.wait()
+
+    p = subprocess.Popen([os.path.join(sourcepath, 'build_boost.sh')])
+    p.wait()
+    if p.returncode != 0:
+      raise Exception('building boost failed')
 
   marker = os.path.join(build, 'boost', '.boost.marker')
   open(marker, 'wb').write('done')
 
   stageResults('boost', [
-    os.path.join(build, 'boost', 'boost_1_63_0', 'boost')
+    os.path.join(build, 'boost', boostversion, 'boost')
     ], [
     os.path.join(build, 'boost', 'build', 'lib')
     ])
@@ -255,26 +296,26 @@ if requiresBuild('tbb', ['opensubdiv']):
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
     ], [
-    os.path.join(build, 'tbb', 'build', 'Release')
+    os.path.join(build, 'tbb', 'build')
     ])
 
 #==================================== double conversion ============================
 
 if requiresBuild('double-conversion'):
   extractSourcePackage('double-conversion', 'double-conversion-1.1.5', 'double-conversion-1.1.5.tar.gz')
-  runCMake('double-conversion', 'double-conversion-1.1.5', ['ALL_BUILD'])
+  runCMake('double-conversion', 'double-conversion-1.1.5', ['all'])
 
   stageResults('double-conversion', [
     os.path.join(build, 'double-conversion', 'double-conversion-1.1.5', 'src')
     ], [
-    os.path.join(build, 'double-conversion', 'build', 'src', 'Release')
+    os.path.join(build, 'double-conversion', 'build', 'src')
     ])
 
 #========================================= ilmbase ===================================
 
 if requiresBuild('ilmbase', ['openexr']):
   extractSourcePackage('ilmbase', 'ilmbase-2.2.0', 'ilmbase-2.2.0.tar.gz')
-  runCMake('ilmbase', 'ilmbase-2.2.0', ['ALL_BUILD'], flags={'BUILD_SHARED_LIBS': 'off'})
+  runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags={'BUILD_SHARED_LIBS': 'off'})
 
   stageResults('ilmbase', [
     os.path.join(build, 'ilmbase', 'ilmbase-2.2.0')
@@ -301,18 +342,22 @@ if requiresBuild('hdf5', ['alembic'], excludeFromAllTarget=True):
 #========================================= openexr ===================================
   
 if requiresBuild('openexr'):
-  ilmbasesourcepath = os.path.join(build, 'ilmbase', 'ilmbase-2.2.0')
-  ilmbasebuildpath = os.path.join(build, 'ilmbase', 'build')
   if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
     patchSourceFile('openexr/openexr-2.2.0/CMakeLists.txt', 'openexr/CMakeLists.txt.patch')
+    patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
-  runCMake('openexr', 'openexr-2.2.0', ['IlmImf/IlmImf', 'IlmImf/dwaLookups', 'IlmImfUtil/IlmImfUtil'], 
+  if platform.system() == 'Windows':
+    projects = ['IlmImf/IlmImf', 'IlmImf/dwaLookups', 'IlmImfUtil/IlmImfUtil']
+  else:
+    projects = ['IlmImf', 'dwaLookups', 'IlmImfUtil']
+
+  runCMake('openexr', 'openexr-2.2.0', projects, 
     flags={
       'BUILD_SHARED_LIBS': 'off', 
       'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
       'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
-      'ILMBASE_INCLUDE_DIR': ilmbasesourcepath,
-      'ILMBASE_LIBRARY_DIR': ilmbasebuildpath,
+      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
+      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
     })
 
   stageResults('openexr', [
@@ -441,8 +486,12 @@ if requiresBuild('usd', excludeFromAllTarget=False):
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'USD/plug.CMakeLists.txt.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'CMakeLists.txt'), 'USD/usd.CMakeLists.txt.patch', throw=False)
 
+  libPrefix = 'lib'
+  if platform.system() == 'Windows':
+    libPrefix = ''
+
   runCMake('USD', sourcepath, [
-      'INSTALL',
+      'install',
     ],
     flags = {
       'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
@@ -452,10 +501,10 @@ if requiresBuild('usd', excludeFromAllTarget=False):
       'TBB_LIBRARY': os.path.join(stage, 'lib', 'lib'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
-      'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half.lib'),
+      'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half'),
 
       'PXR_STRICT_BUILD_MODE': 'off',
-      'PXR_LIB_PREFIX': '',
+      'PXR_LIB_PREFIX': libPrefix,
       'PXR_VALIDATE_GENERATED_CODE': 'off',
       'PXR_BUILD_TESTS': 'off',
       'PXR_BUILD_IMAGING': 'off',

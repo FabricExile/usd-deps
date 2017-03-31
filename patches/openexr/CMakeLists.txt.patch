@@ -1,6 +1,6 @@
 --- CMakeLists.txt	Sun Aug 10 06:23:56 2014
 +++ /c/temp/CMakeLists.txt	Mon Mar 20 14:12:16 2017
-@@ -53,6 +53,20 @@
+@@ -53,6 +53,17 @@
  FIND_PACKAGE(ZLIB REQUIRED)
  INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
  
@@ -12,10 +12,7 @@
 +  ${ILMBASE_INCLUDE_DIR}/IlmThread
 +)
 +LINK_DIRECTORIES(
-+  ${ILMBASE_LIBRARY_DIR}/Half/Release
-+  ${ILMBASE_LIBRARY_DIR}/Iex/Release
-+  ${ILMBASE_LIBRARY_DIR}/Imath/Release
-+  ${ILMBASE_LIBRARY_DIR}/IlmThread/Release
++  ${ILMBASE_LIBRARY_DIR}
 +)
 +
  IF (NOT WIN32)
