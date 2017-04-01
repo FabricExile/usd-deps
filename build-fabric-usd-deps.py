@@ -285,6 +285,7 @@ if requiresBuild('boost'):
     content = content.replace('{{SOURCEPATH}}', sourcepath)
     content = content.replace('{{BUILDPATH}}', buildpath)
     content = content.replace('{{STAGEPATH}}', stage)
+    content = content.replace('{{GCC_CXX}}', GCC_CXX)
 
     with open(os.path.join(sourcepath, 'build_boost.sh'), 'wb') as f:
       f.write(content)
