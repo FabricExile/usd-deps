@@ -193,8 +193,6 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     for flag in cmakeFlags:
       cmd += [str(flag)]
 
-  print cmd
-
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
@@ -323,7 +321,7 @@ if requiresBuild('tbb', ['opensubdiv']):
 
   cmakeFlags = None
   if platform.system() != 'Windows':
-    cmakeFlags = ['-mno-rtm']
+    cmakeFlags = ['-mno-rtm=TRUE']
   runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], cmakeFlags=cmakeFlags)
 
   stageResults('tbb', [
