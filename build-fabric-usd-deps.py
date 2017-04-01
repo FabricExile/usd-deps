@@ -118,6 +118,12 @@ def patchSourceFile(sourceFile, patchFile, throw=True):
     raise Exception('patchSourceFile failed')
 
 def runMSBuild(project, buildpath, configuration='Release'):
+
+  if project.startswith('install.'):
+      project = project.replace('install', 'INSTALL')
+  elif project.startswith('all.'):
+    project = project.replace('all', 'ALL_BUILD')
+
   env = {}
   env.update(os.environ)
   env['PATH'] = env['PATH'] + os.pathsep + vspath
@@ -131,12 +137,6 @@ def runMSBuild(project, buildpath, configuration='Release'):
 def runMake(project, buildpath):
   env = {}
   env.update(os.environ)
-
-  if platform.system() == 'Windows':
-    if project == 'install':
-      project = 'INSTALL'
-    if project == 'all':
-      project = 'ALL_BUILD'
 
   cmd = ['make', project, '-j', '4']
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
