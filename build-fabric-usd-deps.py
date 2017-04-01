@@ -185,7 +185,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
 
   # ensure to use the right gcc
   if os.environ.has_key('GCC_ROOT'):
-    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + *'%s/lib64' % GCC_ROOT)
+    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
     cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
