@@ -193,6 +193,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     for flag in cmakeFlags:
       cmd += [str(flag)]
 
+  print cmd
+
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
