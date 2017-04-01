@@ -67,6 +67,15 @@ if platform.system() == 'Windows':
     raise Exception('msbuildpath not found')
   if not os.path.exists(ucrtpath):
     raise Exception('ucrtpath not found')
+else:
+  if os.environ.has_key('GCC_ROOT'):
+    GCC_CC = '$(GCC_ROOT)/bin/gcc'
+    GCC_CXX = '$(GCC_ROOT)/bin/g++'
+    GCC_LIB = '$(GCC_ROOT)/lib64'
+  else:
+    GCC_CC = 'cc'
+    GCC_CXX = 'c++'
+    GCC_LIB = ''
 
 #========================================= clean =====================================
 if target in ['clean']:
@@ -139,6 +148,13 @@ def runMake(project, buildpath):
   env.update(os.environ)
 
   cmd = ['make', project, '-j', '4']
+
+  # ensure to use the right gcc
+  if os.environ.has_key('GCC_ROOT'):
+    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + '$(GCC_ROOT)/lib64'
+    cmd += ['CC=%s' % GCC_CC]
+    cmd += ['CXX=%s' % GCC_CXX]
+
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
@@ -165,6 +181,12 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
 
   # ensure 64 bit generator
   cmd += ['-DCMAKE_GENERATOR_PLATFORM=x64']
+
+  # ensure to use the right gcc
+  if os.environ.has_key('GCC_ROOT'):
+    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + '$(GCC_ROOT)/lib64'
+    cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
+    cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
