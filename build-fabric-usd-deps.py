@@ -190,8 +190,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
   if cmakeFlags:
-    for flag in cmakeFlags:
-      cmd += flag
+    cmd += [cmakeFlags]
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
