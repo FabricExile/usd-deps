@@ -161,7 +161,7 @@ def runMake(project, buildpath):
   if p.returncode != 0:
     raise Exception('runMake failed')
 
-def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
+def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release', cmakeFlags=[]):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, name, sourcepath)
@@ -188,6 +188,10 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
     cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
+
+  if cmakeFlags:
+    for flag in cmakeFlags:
+      cmd += flag
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
@@ -315,9 +319,10 @@ if requiresBuild('tbb', ['opensubdiv']):
   if extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz'):
     patchSourceFile('tbb/tbb-tbb43u6/include/tbb/tbb_config.h', 'tbb/tbb_config.h.patch')
 
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], flags={
-    'NO_RTM': 'TRUE'
-    })
+  cmakeFlags = None
+  if platform.system() != 'Windows':
+    cmakeFlags = ['-mno-rtm']
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], cmakeFlags=cmakeFlags)
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
