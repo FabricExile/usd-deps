@@ -161,7 +161,7 @@ def runMake(project, buildpath):
   if p.returncode != 0:
     raise Exception('runMake failed')
 
-def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release', cmakeFlags=[]):
+def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', configuration='Release'):
   sourcepath = folder
   if not os.path.isabs(sourcepath):
     sourcepath = os.path.join(build, name, sourcepath)
@@ -178,7 +178,10 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
   else:
     cmd = ['cmake', sourcepath]
   for flag in flags:
-    cmd += ['-D%s=%s' % (flag, flags[flag])]
+    if flag.startswith('-'):
+      cmd += ['%s=%s' % (flag, flags[flag])]
+    else:
+      cmd += ['-D%s=%s' % (flag, flags[flag])]
 
   # ensure 64 bit generator
   cmd += ['-DCMAKE_GENERATOR_PLATFORM=x64']
@@ -188,10 +191,6 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
     cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
-
-  if cmakeFlags:
-    for flag in cmakeFlags:
-      cmd += [str(flag)]
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
@@ -321,8 +320,9 @@ if requiresBuild('tbb', ['opensubdiv']):
 
   cmakeFlags = None
   if platform.system() != 'Windows':
-    cmakeFlags = ['-mno-rtm=TRUE']
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], cmakeFlags=cmakeFlags)
+    cmakeFlags = {'-mno-rtm' : 'TRUE'}
+    
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], flags=cmakeFlags)
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
