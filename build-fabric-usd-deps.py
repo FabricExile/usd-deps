@@ -260,7 +260,11 @@ if requiresBuild('boost'):
   if platform.system() == 'Windows':
     env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
 
-  extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion)
+  if extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion):
+    if os.environ.has_key('GCC_ROOT'):
+      cmd = "echo 'using gcc : 4.8 : $(GCC_CXX) ;' >> %s/tools/build/v2/user-config.jam" % sourcepath
+      os.system(cmd)
+
   if platform.system() == 'Windows':
 
     content = None
