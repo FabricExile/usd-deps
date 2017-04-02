@@ -262,7 +262,7 @@ if requiresBuild('boost'):
 
   if extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion):
     if os.environ.has_key('GCC_ROOT'):
-      cmd = "echo 'using gcc : 4.8 : $(GCC_CXX) ;' >> %s/tools/build/v2/user-config.jam" % sourcepath
+      cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
       os.system(cmd)
 
   if platform.system() == 'Windows':
