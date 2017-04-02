@@ -264,8 +264,8 @@ if requiresBuild('boost'):
       cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
       os.system(cmd)
 
+      # remove GCC_ROOT from the env for this process since b2 will use it incorrectly
       del env['GCC_ROOT']
-      # env['C_INCLUDE_PATH'] = "{0}/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include:{0}/include".format(GCC_ROOT)
 
   if os.environ.has_key('GCC_ROOT'):
     env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
