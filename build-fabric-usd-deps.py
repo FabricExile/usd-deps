@@ -260,10 +260,9 @@ if requiresBuild('boost'):
     env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
 
   if extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion):
-    # if os.environ.has_key('GCC_ROOT'):
-    #   cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
-    #   os.system(cmd)
-    pass
+    if os.environ.has_key('GCC_ROOT'):
+      cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
+      os.system(cmd)
 
   if os.environ.has_key('GCC_ROOT'):
     env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
