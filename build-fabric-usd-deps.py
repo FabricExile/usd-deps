@@ -318,11 +318,11 @@ if requiresBuild('tbb', ['opensubdiv']):
   if extractSourcePackage('tbb', 'tbb-tbb43u6', 'tbb-tbb43u6.tgz'):
     patchSourceFile('tbb/tbb-tbb43u6/include/tbb/tbb_config.h', 'tbb/tbb_config.h.patch')
 
-  cmakeFlags = None
-  if platform.system() != 'Windows':
-    cmakeFlags = {'-mno-rtm' : 'TRUE'}
-    
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'], flags=cmakeFlags)
+  # patch for disabling the rmtm option in cmake
+  if os.environ.has_key('GCC_ROOT'):
+    patchSourceFile('tbb/tbb-tbb43u6/CMakeLists.txt', 'tbb/CMakeLists.txt.patch')
+
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbbmalloc_proxy', 'tbb'])
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
