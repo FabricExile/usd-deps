@@ -26,8 +26,7 @@ allowedTargets = [
   'ptex',
   'opensubdiv',
   'alembic',
-  'usd-static',
-  'usd-dynamic',
+  'usd',
 ]
 if not target in allowedTargets:
   print """
@@ -261,9 +260,13 @@ if requiresBuild('boost'):
     env['PATH'] += r';C:\Program Files (x86)\Microsoft Visual Studio %s.0\VC\bin' % vsversion
 
   if extractSourcePackage('boost', boostversion, '%s.tar.bz2' % boostversion):
-    if os.environ.has_key('GCC_ROOT'):
-      cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
-      os.system(cmd)
+    # if os.environ.has_key('GCC_ROOT'):
+    #   cmd = "echo 'using gcc : 4.8 : %s ;' >> %s/tools/build/v2/user-config.jam" % (GCC_CXX, sourcepath)
+    #   os.system(cmd)
+    pass
+
+  if os.environ.has_key('GCC_ROOT'):
+    env['LD_LIBRARY_PATH'] = env.get('LD_LIBRARY_PATH', '') + os.pathsep + ('%s/lib64' % GCC_ROOT)
 
   if platform.system() == 'Windows':
 
@@ -301,7 +304,7 @@ if requiresBuild('boost'):
     p = subprocess.Popen(['chmod', '+x', os.path.join(sourcepath, 'build_boost.sh')])
     p.wait()
 
-    p = subprocess.Popen([os.path.join(sourcepath, 'build_boost.sh')])
+    p = subprocess.Popen([os.path.join(sourcepath, 'build_boost.sh')], env=env, cwd=sourcepath)
     p.wait()
     if p.returncode != 0:
       raise Exception('building boost failed')
