@@ -402,7 +402,7 @@ if requiresBuild('openexr'):
   if platform.system() == 'Darwin':
     flags['CMAKE_C_COMPILER'] = '/usr/bin/gcc'
     flags['CMAKE_CXX_COMPILER'] = '/usr/bin/g++'
-    flags['CMAKE_CXX_FLAGS'] = '-std=gnu++11 -stdlib=libc++'
+    flags['CMAKE_CXX_FLAGS'] = '-std=c++11 -stdlib=libc++'
 
   runCMake('openexr', 'openexr-2.2.0', projects, flags=flags)
 
