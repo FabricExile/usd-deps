@@ -387,10 +387,10 @@ if requiresBuild('openexr'):
   if platform.system() == 'Darwin':
     # for osx let's use the prebuilt packages
 
-    if not os.environ.has_key('FABRIC_DIR'):
-      raise Exception('FABRIC_DIR needs to be specified.')
+    if not os.environ.has_key('FABRIC_SCENE_GRAPH_DIR'):
+      raise Exception('FABRIC_SCENE_GRAPH_DIR needs to be specified.')
 
-    openexrDir = os.path.join(os.environ['FABRIC_DIR'], 'ThirdParty', 'PreBuilt', 'Darwin', 'x86_64', 'stdlib-libc++', 'Release', 'openexr')
+    openexrDir = os.path.join(os.environ['FABRIC_SCENE_GRAPH_DIR'], 'ThirdParty', 'PreBuilt', 'Darwin', 'x86_64', 'stdlib-libc++', 'Release', 'openexr')
     print openexrDir
 
     stageResults('openexr', [
