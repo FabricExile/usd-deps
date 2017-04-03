@@ -575,6 +575,11 @@ if requiresBuild('usd', excludeFromAllTarget=False):
   libPrefix = 'lib'
   if platform.system() == 'Windows':
     libPrefix = ''
+  libSuffix = '.so'
+  if platform.system() == 'Windows':
+    libSuffix = '.lib'
+  elif platform.system() == 'Darwin':
+    libSuffix = '.dylib'
 
   runCMake('USD', sourcepath, [
       'install',
@@ -584,7 +589,7 @@ if requiresBuild('usd', excludeFromAllTarget=False):
       'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'TBB_LIBRARY': os.path.join(stage, 'lib', 'lib'),
+      'TBB_LIBRARY': os.path.join(stage, 'lib', libPrefix+'tbb'),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
       'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half'),
