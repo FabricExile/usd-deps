@@ -1,14 +1,19 @@
---- fileUtils.cpp	Mon Apr  3 13:18:03 2017
-+++ /c/temp/fileUtils.cpp	Mon Apr  3 13:17:54 2017
-@@ -348,7 +348,11 @@
+--- USD/pxr/base/lib/tf/fileUtils.cpp	Mon Apr  3 13:18:03 2017
++++ /c/temp/fileUtils.cpp	Mon Apr  3 13:32:38 2017
+@@ -348,8 +348,16 @@
              // If d_type is not available, or the filesystem has no support
              // for d_type, fall back to lstat.
              struct stat st;
 +#if defined(ARCH_OS_DARWIN)
-+            if (fstatat(dirfd(dir), entry.d_name, &st, 0) != 0)
++            std::string fullpath = (dirPath + "/") + entry.d_name;
++            int fullpathfd = open(fullpath.c_str(), O_RDONLY);
++            if(fstat(fullpathfd, &st) != -0)
++              continue;
++            close(fullpathfd);
 +#else
              if (fstatat(dirfd(dir), entry.d_name, &st, AT_SYMLINK_NOFOLLOW) != 0)
-+#endif
                  continue;
++#endif
  
              if (S_ISDIR(st.st_mode)) {
+                 entryIsDir = true;

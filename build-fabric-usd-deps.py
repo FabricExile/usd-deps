@@ -174,6 +174,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
   # cmd = ['cmake', "-G", "Visual Studio %s Win64" % vsversion, sourcepath]
   if platform.system() == 'Windows':
     cmd = ['cmake', "-G", "Visual Studio %s" % vsversion, sourcepath]
+  elif platform.system() == 'Darwin':
+    cmd = ['cmake', "-G", "Xcode", sourcepath]
   else:
     cmd = ['cmake', sourcepath]
   for flag in flags:
