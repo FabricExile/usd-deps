@@ -395,12 +395,12 @@ if requiresBuild('openexr'):
     env['CXXFLAGS'] = ' -I'.join(['',
       os.path.abspath(os.path.join(stage, 'include')),
       os.path.abspath(os.path.join(stage, 'include', 'ilmbase')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'config')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Half')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'IlmThread')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Iex')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'IexMath')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Imath')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'config')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'Half')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'IlmThread')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'Iex')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'IexMath')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase', 'Imath')),
       ])
 
     cmd = [
@@ -414,6 +414,13 @@ if requiresBuild('openexr'):
     if p.returncode != 0 and throw:
       raise Exception('configure failed')
 
+    cmd = ['make', '-j4']
+
+    stageResults('openexr', [
+      os.path.join(build, 'openexr', 'openexr-2.2.0')
+      ], [
+      os.path.join(build, 'openexr', 'build')
+      ])
 
   else:
     if platform.system() == 'Windows':
