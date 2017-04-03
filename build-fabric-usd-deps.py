@@ -186,7 +186,8 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
       cmd += ['-D%s=%s' % (flag, flags[flag])]
 
   # ensure 64 bit generator
-  cmd += ['-DCMAKE_GENERATOR_PLATFORM=x64']
+  if platform.system() == 'Windows':
+    cmd += ['-DCMAKE_GENERATOR_PLATFORM=x64']
 
   # ensure to use the right gcc
   if os.environ.has_key('GCC_ROOT'):

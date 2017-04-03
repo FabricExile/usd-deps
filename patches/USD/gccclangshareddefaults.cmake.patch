@@ -1,0 +1,11 @@
+--- USD/cmake/defaults/gccclangshareddefaults.cmake	Fri Mar 31 13:40:16 2017
++++ /c/temp/gccclangshareddefaults.cmake	Mon Apr  3 14:46:40 2017
+@@ -28,7 +28,7 @@
+ include(Options)
+ 
+ # Turn on C++11; pxr won't build without it. 
+-set(_PXR_GCC_CLANG_SHARED_CXX_FLAGS "${_PXR_GCC_CLANG_SHARED_CXX_FLAGS} -std=c++11")
++set(_PXR_GCC_CLANG_SHARED_CXX_FLAGS "${_PXR_GCC_CLANG_SHARED_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+ 
+ # Enable all warnings.
+ set(_PXR_GCC_CLANG_SHARED_CXX_FLAGS "${_PXR_GCC_CLANG_SHARED_CXX_FLAGS} -Wall")
