@@ -201,6 +201,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_OSX_ARCHITECTURES=x86_64']
+    cmd += ['-v']
     # cmd += ['-DCMAKE_STATIC_LINKER_FLAGS=-stdlib=libstdc++']
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
