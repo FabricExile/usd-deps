@@ -191,6 +191,11 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
+  elif platform.system() == 'Darwin':
+    cmd += ['-DCMAKE_C_COMPILER=/usr/bin/gcc'
+    cmd += ['-DCMAKE_CXX_COMPILER=/usr/bin/g++'
+    cmd += ['-DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++"'
+
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
@@ -398,11 +403,6 @@ if requiresBuild('openexr'):
     'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
     'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
     }
-
-  if platform.system() == 'Darwin':
-    flags['CMAKE_C_COMPILER'] = '/usr/bin/gcc'
-    flags['CMAKE_CXX_COMPILER'] = '/usr/bin/g++'
-    flags['CMAKE_CXX_FLAGS'] = '-std=c++11 -stdlib=libc++'
 
   runCMake('openexr', 'openexr-2.2.0', projects, flags=flags)
 
