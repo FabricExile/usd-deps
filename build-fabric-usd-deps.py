@@ -354,6 +354,7 @@ if requiresBuild('double-conversion'):
 #========================================= ilmbase ===================================
 
 if requiresBuild('ilmbase', ['openexr']):
+
   extractSourcePackage('ilmbase', 'ilmbase-2.2.0', 'ilmbase-2.2.0.tar.gz')
   runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags={'BUILD_SHARED_LIBS': 'off'})
 
@@ -382,30 +383,47 @@ if requiresBuild('hdf5', ['alembic'], excludeFromAllTarget=True):
 #========================================= openexr ===================================
   
 if requiresBuild('openexr'):
-  if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
-    patchSourceFile('openexr/openexr-2.2.0/CMakeLists.txt', 'openexr/CMakeLists.txt.patch')
-    patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
-  if platform.system() == 'Windows':
-    projects = ['IlmImf/IlmImf', 'IlmImfUtil/IlmImfUtil']
+  if platform.system() == 'Darwin':
+    # for osx let's use the prebuilt packages
+
+    if not os.environ.has_key('FABRIC_DIR'):
+      raise Exception('FABRIC_DIR needs to be specified.')
+
+    openexrDir = os.path.join(os.environ['FABRIC_DIR'], 'ThirdParty', 'PreBuilt', 'Darwin', 'x86_64', 'stdlib-libc++', 'Release', 'openexr')
+
+    stageResults('openexr', [
+      openexrDir
+      ], [
+      openexrDir
+      ])
+
   else:
-    projects = ['IlmImf', 'IlmImfUtil']
 
-  flags={
-    'BUILD_SHARED_LIBS': 'off', 
-    'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
-    'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
-    'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
-    'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
-    }
+    if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
+      patchSourceFile('openexr/openexr-2.2.0/CMakeLists.txt', 'openexr/CMakeLists.txt.patch')
+      patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
-  runCMake('openexr', 'openexr-2.2.0', projects, flags=flags)
+    if platform.system() == 'Windows':
+      projects = ['IlmImf/IlmImf', 'IlmImfUtil/IlmImfUtil']
+    else:
+      projects = ['IlmImf', 'IlmImfUtil']
 
-  stageResults('openexr', [
-    os.path.join(build, 'openexr', 'openexr-2.2.0')
-    ], [
-    os.path.join(build, 'openexr', 'build')
-    ])
+    flags={
+      'BUILD_SHARED_LIBS': 'off', 
+      'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
+      'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
+      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
+      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
+      }
+
+    runCMake('openexr', 'openexr-2.2.0', projects, flags=flags)
+
+    stageResults('openexr', [
+      os.path.join(build, 'openexr', 'openexr-2.2.0')
+      ], [
+      os.path.join(build, 'openexr', 'build')
+      ])
 
 #========================================== ptex =====================================
 
