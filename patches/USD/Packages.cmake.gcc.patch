@@ -1,0 +1,30 @@
+--- USD/cmake/defaults/Packages.cmake	Thu Mar 23 14:10:04 2017
++++ /c/temp/Packages.cmake	Thu Mar 23 14:10:21 2017
+@@ -27,6 +27,14 @@
+ find_package(PythonLibs 2.7 REQUIRED)
+ find_package(PythonInterp 2.7 REQUIRED)
+ 
++if(MSVC)
++    add_definitions(-DBOOST_ALL_NO_LIB)
++    add_definitions(-DBOOST_PYTHON_STATIC_LIB)
++    set(Boost_USE_MULTITHREADED ON)
++    set(Boost_USE_STATIC_LIBS ON)
++    set(Boost_USE_STATIC_RUNTIME ON)
++endif()
++
+ # --Boost
+ find_package(Boost
+     COMPONENTS
+@@ -40,8 +48,10 @@
+ )
+ 
+ # --TBB
+-find_package(TBB REQUIRED)
+-add_definitions(${TBB_DEFINITIONS})
++# find_package(TBB REQUIRED)
++# add_definitions(${TBB_DEFINITIONS})
++include_directories(${TBB_INCLUDE_DIR})
++link_directories(${TBB_LIBRARIES})
+ 
+ # --OpenEXR
+ find_package(OpenEXR REQUIRED)

@@ -1,0 +1,12 @@
+--- CMakeLists.txt	Thu May 12 04:54:32 2016
++++ /c/temp/CMakeLists.txt	Sun Apr  2 18:13:41 2017
+@@ -52,9 +52,6 @@
+ 
+ if (UNIX)
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DUSE_PTHREAD")
+-  if(NOT CMAKE_CXX_FLAGS MATCHES "-mno-rtm")
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mrtm")
+-  endif()
+ elseif(WIN32)
+   if (MSVC)
+     cmake_minimum_required (VERSION 3.1)
