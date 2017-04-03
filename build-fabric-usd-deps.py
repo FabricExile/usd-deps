@@ -387,9 +387,9 @@ if requiresBuild('openexr'):
     patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
   if platform.system() == 'Windows':
-    projects = ['IlmImf/IlmImf', 'IlmImf/dwaLookups', 'IlmImfUtil/IlmImfUtil']
+    projects = ['IlmImf/IlmImf', 'IlmImfUtil/IlmImfUtil']
   else:
-    projects = ['IlmImf', 'dwaLookups', 'IlmImfUtil']
+    projects = ['IlmImf', 'IlmImfUtil']
 
   runCMake('openexr', 'openexr-2.2.0', projects, 
     flags={
