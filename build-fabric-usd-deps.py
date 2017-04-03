@@ -391,6 +391,7 @@ if requiresBuild('openexr'):
       raise Exception('FABRIC_DIR needs to be specified.')
 
     openexrDir = os.path.join(os.environ['FABRIC_DIR'], 'ThirdParty', 'PreBuilt', 'Darwin', 'x86_64', 'stdlib-libc++', 'Release', 'openexr')
+    print openexrDir
 
     stageResults('openexr', [
       openexrDir
