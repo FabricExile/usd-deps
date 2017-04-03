@@ -1,6 +1,6 @@
---- build/openexr-2.2.0/IlmImf/CMakeLists.txt	Sun Aug 10 06:23:56 2014
-+++ /c/temp/CMakeLists.txt	Mon Apr  3 12:24:11 2017
-@@ -8,33 +8,33 @@
+--- CMakeLists.txt	2017-03-31 14:57:01.272144908 +0200
++++ /home/helge/CMakeLists.txt	2017-03-31 14:57:18.960536120 +0200
+@@ -8,8 +8,8 @@
  
  TARGET_LINK_LIBRARIES ( b44ExpLogTable
    Half
@@ -10,24 +10,7 @@
    ${PTHREAD_LIB}
  )
  
--ADD_CUSTOM_COMMAND (
--  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/b44ExpLogTable.h
--  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/b44ExpLogTable > ${CMAKE_CURRENT_BINARY_DIR}/b44ExpLogTable.h
--  DEPENDS b44ExpLogTable
--)
--
--ADD_EXECUTABLE ( dwaLookups
--  dwaLookups.cpp
--)
-+# ADD_CUSTOM_COMMAND (
-+#   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/b44ExpLogTable.h
-+#   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/b44ExpLogTable > ${CMAKE_CURRENT_BINARY_DIR}/b44ExpLogTable.h
-+#   DEPENDS b44ExpLogTable
-+# )
-+
-+# ADD_EXECUTABLE ( dwaLookups
-+#   dwaLookups.cpp
-+# )
+@@ -25,8 +25,8 @@
  
  TARGET_LINK_LIBRARIES ( dwaLookups
    Half
@@ -37,19 +20,6 @@
    ${PTHREAD_LIB}
  )
  
--ADD_CUSTOM_COMMAND (
--  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dwaLookups.h
--  COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dwaLookups > ${CMAKE_CURRENT_BINARY_DIR}/dwaLookups.h
--  DEPENDS dwaLookups
--)
-+# ADD_CUSTOM_COMMAND (
-+#   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dwaLookups.h
-+#   COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/dwaLookups > ${CMAKE_CURRENT_BINARY_DIR}/dwaLookups.h
-+#   DEPENDS dwaLookups
-+# )
- 
- SET ( ILMIMF_SRCS
-   ImfAttribute.cpp
 @@ -138,9 +138,9 @@
  
  TARGET_LINK_LIBRARIES ( IlmImf 
