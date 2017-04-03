@@ -302,8 +302,12 @@ if requiresBuild('boost'):
   else:
 
     content = None
-    with open(os.path.join(root, 'patches', 'boost', 'build_boost.sh'), 'rb') as f:
-      content = f.read()
+    if platform.system() == 'Darwin':
+      with open(os.path.join(root, 'patches', 'boost', 'build_boost_darwin.sh'), 'rb') as f:
+        content = f.read()
+    else:
+      with open(os.path.join(root, 'patches', 'boost', 'build_boost.sh'), 'rb') as f:
+        content = f.read()
 
     content = content.replace('{{SOURCEPATH}}', sourcepath)
     content = content.replace('{{BUILDPATH}}', buildpath)
