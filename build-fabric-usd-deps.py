@@ -384,7 +384,6 @@ if requiresBuild('hdf5', ['alembic'], excludeFromAllTarget=True):
 if requiresBuild('openexr'):
   if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
     patchSourceFile('openexr/openexr-2.2.0/CMakeLists.txt', 'openexr/CMakeLists.txt.patch')
-    patchSourceFile('openexr/openexr-2.2.0/configure', 'openexr/configure.patch')
     patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
   if platform.system() == 'Windows':
