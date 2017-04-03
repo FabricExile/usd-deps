@@ -387,25 +387,54 @@ if requiresBuild('openexr'):
     patchSourceFile('openexr/openexr-2.2.0/configure', 'openexr/configure.patch')
     patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
-  if platform.system() == 'Windows':
-    projects = ['IlmImf/IlmImf', 'IlmImf/dwaLookups', 'IlmImfUtil/IlmImfUtil']
+  if platform.system() == 'Darwin':
+
+    env = {}
+    env.update(os.environ)
+
+    env['CXXFLAGS'] = ' -I'.join(['',
+      os.path.abspath(os.path.join(stage, 'include')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'config'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Half'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'IlmThread'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Iex'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'IexMath'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Imath'),
+      ])
+
+    cmd = [
+      './configure',
+      '--with-ilmbase-prefix=%s' % stage,
+      '--disable-ilmbasetest'
+      ]
+
+    p = subprocess.Popen(cmd, cwd=os.path.join(build, 'openexr', 'openexr-2.2.0'), env=env)
+    p.wait()
+    if p.returncode != 0 and throw:
+      raise Exception('configure failed')
+
+
   else:
-    projects = ['IlmImf', 'dwaLookups', 'IlmImfUtil']
+    if platform.system() == 'Windows':
+      projects = ['IlmImf/IlmImf', 'IlmImf/dwaLookups', 'IlmImfUtil/IlmImfUtil']
+    else:
+      projects = ['IlmImf', 'dwaLookups', 'IlmImfUtil']
 
-  runCMake('openexr', 'openexr-2.2.0', projects, 
-    flags={
-      'BUILD_SHARED_LIBS': 'off', 
-      'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
-      'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
-      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
-      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
-    })
+    runCMake('openexr', 'openexr-2.2.0', projects, 
+      flags={
+        'BUILD_SHARED_LIBS': 'off', 
+        'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
+        'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
+        'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
+        'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
+      })
 
-  stageResults('openexr', [
-    os.path.join(build, 'openexr', 'openexr-2.2.0')
-    ], [
-    os.path.join(build, 'openexr', 'build')
-    ])
+    stageResults('openexr', [
+      os.path.join(build, 'openexr', 'openexr-2.2.0')
+      ], [
+      os.path.join(build, 'openexr', 'build')
+      ])
 
 #========================================== ptex =====================================
 
