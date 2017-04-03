@@ -195,12 +195,12 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
   if platform.system() == 'Darwin':
+    cmd += ['-DCMAKE_OSX_ARCHITECTURES=x86_64']
     cmd += ['-DCMAKE_C_FLAGS=-stdlib=libstdc++ -arch x86_64']
-    cmd += ['-DCMAKE_CXX_FLAGS=-stdlib=libstdc++ -arch x86_64']
+    cmd += ['-DCMAKE_CXX_FLAGS=-std=c++11 -stdlib=libstdc++ -arch x86_64']
     cmd += ['-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++']
-    cmd += ['-DCMAKE_OSX_ARCHITECTURES=x86_64']
     # cmd += ['-DCMAKE_STATIC_LINKER_FLAGS=-stdlib=libstdc++']
 
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
