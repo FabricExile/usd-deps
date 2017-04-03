@@ -391,14 +391,19 @@ if requiresBuild('openexr'):
   else:
     projects = ['IlmImf', 'IlmImfUtil']
 
-  runCMake('openexr', 'openexr-2.2.0', projects, 
-    flags={
-      'BUILD_SHARED_LIBS': 'off', 
-      'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
-      'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
-      'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
-      'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
-    })
+  flags={
+    'BUILD_SHARED_LIBS': 'off', 
+    'ZLIB_INCLUDE_DIR': os.path.join(stage, 'include', 'zlib'),
+    'ZLIB_LIBRARY': os.path.join(stage, 'lib', 'zlibstatic.lib'),
+    'ILMBASE_INCLUDE_DIR': os.path.join(stage, 'include', 'ilmbase'),
+    'ILMBASE_LIBRARY_DIR': os.path.join(stage, 'lib'),
+    }
+
+  if platform.system() == 'Darwin':
+    flags['CMAKE_C_COMPILER'] = '/usr/bin/gcc'
+    flags['CMAKE_CXX_COMPILER'] = '/usr/bin/g++'
+
+  runCMake('openexr', 'openexr-2.2.0', projects, flags=flags)
 
   stageResults('openexr', [
     os.path.join(build, 'openexr', 'openexr-2.2.0')
