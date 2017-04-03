@@ -398,6 +398,11 @@ if requiresBuild('openexr'):
       openexrDir
       ])
 
+    if not os.path.exists(os.path.join(build, 'openexr')):
+      os.makedirs(os.path.join(build, 'openexr'))
+    marker = os.path.join(build, 'openexr', '.openexr.marker')
+    open(marker, 'wb').write('done')
+
   else:
 
     if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
