@@ -395,12 +395,12 @@ if requiresBuild('openexr'):
     env['CXXFLAGS'] = ' -I'.join(['',
       os.path.abspath(os.path.join(stage, 'include')),
       os.path.abspath(os.path.join(stage, 'include', 'ilmbase')),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'config'),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Half'),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'IlmThread'),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Iex'),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'IexMath'),
-      os.path.abspath(os.path.join(stage, 'include', 'ilmbase'), 'Imath'),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'config')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Half')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'IlmThread')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Iex')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'IexMath')),
+      os.path.abspath(os.path.join(stage, 'include', 'ilmbase' 'Imath')),
       ])
 
     cmd = [
