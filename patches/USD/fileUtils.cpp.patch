@@ -1,0 +1,14 @@
+--- fileUtils.cpp	Mon Apr  3 13:18:03 2017
++++ /c/temp/fileUtils.cpp	Mon Apr  3 13:17:54 2017
+@@ -348,7 +348,11 @@
+             // If d_type is not available, or the filesystem has no support
+             // for d_type, fall back to lstat.
+             struct stat st;
++#if defined(ARCH_OS_DARWIN)
++            if (fstatat(dirfd(dir), entry.d_name, &st, 0) != 0)
++#else
+             if (fstatat(dirfd(dir), entry.d_name, &st, AT_SYMLINK_NOFOLLOW) != 0)
++#endif
+                 continue;
+ 
+             if (S_ISDIR(st.st_mode)) {
