@@ -195,6 +195,7 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
   if platform.system() == 'Darwin':
+    cmd += ['-DCMAKE_C_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_CXX_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++']
     cmd += ['-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libstdc++']
