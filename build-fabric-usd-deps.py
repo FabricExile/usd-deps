@@ -355,7 +355,12 @@ if requiresBuild('double-conversion'):
 
 if requiresBuild('ilmbase', ['openexr']):
   extractSourcePackage('ilmbase', 'ilmbase-2.2.0', 'ilmbase-2.2.0.tar.gz')
-  runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags={'BUILD_SHARED_LIBS': 'off'})
+
+  flags = {'BUILD_SHARED_LIBS': 'off'}
+  if platform.system() == 'Darwin':
+    flags['NAMESPACE_VERSIONING'] = 'off'
+
+  runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags=flags)
 
   stageResults('ilmbase', [
     os.path.join(build, 'ilmbase', 'ilmbase-2.2.0')
