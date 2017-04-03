@@ -194,6 +194,10 @@ def runCMake(name, folder, projects, flags={}, env={}, subfolder='build', config
     cmd += ['-DCMAKE_C_COMPILER=%s' % GCC_CC]
     cmd += ['-DCMAKE_CXX_COMPILER=%s' % GCC_CXX]
 
+  if platform.system() == 'Darwin':
+    cmd += ['-DCMAKE_CXX_FLAGS=-stdlib=libstdc++']
+    cmd += ['-DCMAKE_LD_FLAGS=-stdlib=libstdc++']
+
   p = subprocess.Popen(cmd, cwd=buildpath, env=env)
   p.wait()
   if p.returncode != 0:
