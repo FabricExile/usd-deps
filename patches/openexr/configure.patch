@@ -1,0 +1,30 @@
+--- configure	Sun Aug 10 06:48:26 2014
++++ /c/temp/configure	Mon Apr  3 12:03:20 2017
+@@ -15570,7 +15570,7 @@
+    done
+    TEST_LDFLAGS="-L$test_prefix/lib"
+    TEST_LDFLAGS="$TEST_LDFLAGS $LIB64_IF_EXISTS -L/usr/local/lib"
+-   TEST_LIBS="-lImath -lHalf -lIex -lIlmThread -lpthread"
++   TEST_LIBS="-lImath-2_2 -lHalf -lIlmThread-2_2 -lIex-2_2 -lpthread"
+ else
+                            if test x$PKG_CONFIG != xno ; then
+       echo "using pkg-config to set ILMBASE_CXXFLAGS and ILMBASE_LDFLAGS:"
+@@ -15601,7 +15601,7 @@
+          done
+          TEST_LDFLAGS="$LIB64_IF_EXISTS -L/usr/local/lib"
+       fi
+-      TEST_LIBS="-lImath -lHalf -lIex -lIlmThread -lpthread"
++      TEST_LIBS="-lImath-2_2 -lHalf -lIlmThread-2_2 -lIex-2_2 -lpthread"
+    fi
+ fi
+ 
+@@ -19025,7 +19025,8 @@
+ if test -n "$CONFIG_FILES"; then
+ 
+ 
+-ac_cr=''
++ac_cr='
++'
+ ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
+ if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
+   ac_cs_awk_cr='\\r'

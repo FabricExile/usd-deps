@@ -355,12 +355,7 @@ if requiresBuild('double-conversion'):
 
 if requiresBuild('ilmbase', ['openexr']):
   extractSourcePackage('ilmbase', 'ilmbase-2.2.0', 'ilmbase-2.2.0.tar.gz')
-
-  flags = {'BUILD_SHARED_LIBS': 'off'}
-  if platform.system() == 'Darwin':
-    flags['NAMESPACE_VERSIONING'] = 'off'
-
-  runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags=flags)
+  runCMake('ilmbase', 'ilmbase-2.2.0', ['all'], flags={'BUILD_SHARED_LIBS': 'off'})
 
   stageResults('ilmbase', [
     os.path.join(build, 'ilmbase', 'ilmbase-2.2.0')
@@ -389,6 +384,7 @@ if requiresBuild('hdf5', ['alembic'], excludeFromAllTarget=True):
 if requiresBuild('openexr'):
   if extractSourcePackage('openexr', 'openexr-2.2.0', 'openexr-2.2.0.tar.gz'):
     patchSourceFile('openexr/openexr-2.2.0/CMakeLists.txt', 'openexr/CMakeLists.txt.patch')
+    patchSourceFile('openexr/openexr-2.2.0/configure', 'openexr/configure.patch')
     patchSourceFile('openexr/openexr-2.2.0/IlmImf/CMakeLists.txt', 'openexr/IlmImf.CMakeLists.txt.patch')
 
   if platform.system() == 'Windows':
