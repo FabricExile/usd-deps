@@ -606,7 +606,7 @@ if requiresBuild('usd', excludeFromAllTarget=False):
       'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
       'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
-      'TBB_LIBRARIES': tbbLibrary + ' ' + tbbMallocLibrary,
+      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
       'TBB_LIBRARY': tbbLibrary,
       'TBB_tbb_LIBRARY': tbbLibrary,
       'TBB_tbbmalloc_LIBRARY': tbbMallocLibrary,
