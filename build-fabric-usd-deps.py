@@ -369,9 +369,9 @@ if requiresBuild('tbb', ['opensubdiv']):
     cflags['CMAKE_CXX_FLAGS'] =  '-fPIC'
 
   if platform.system() == 'Windows':
-    project = ['tbbmalloc', 'tbb']
+    projects = ['tbbmalloc', 'tbb']
   else:
-    project = ['tbbmalloc_static', 'tbb_static']
+    projects = ['tbbmalloc_static', 'tbb_static']
   runCMake('tbb', 'tbb-tbb43u6', projects, flags=cflags)
 
   stageResults('tbb', [
