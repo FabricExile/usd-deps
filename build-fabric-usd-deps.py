@@ -580,6 +580,7 @@ if requiresBuild('usd', excludeFromAllTarget=False):
   else:
     patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.gcc.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
+  patchSourceFile(os.path.join(root, 'USD', 'extras', 'CMakeLists.txt'), 'USD/extras.CMakeLists.txt.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'USD/sdf.layer.h.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'textFileFormat.cpp'), 'USD/textFileFormat.cpp.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'arch', 'fileSystem.cpp'), 'USD/fileSystem.cpp.patch', throw=False)
