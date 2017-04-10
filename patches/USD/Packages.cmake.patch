@@ -24,7 +24,7 @@
 +# find_package(TBB REQUIRED)
 +# add_definitions(${TBB_DEFINITIONS})
 +include_directories(${TBB_INCLUDE_DIR})
-+link_directories(${TBB_LIBRARIES})
++#link_directories(${TBB_LIBRARIES})
  
  # --OpenEXR
  find_package(OpenEXR REQUIRED)

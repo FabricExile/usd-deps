@@ -1,6 +1,0 @@
---- CMakeLists.txt	Fri Mar 31 13:40:16 2017
-+++ /c/temp/CMakeLists.txt	Mon Apr 10 11:52:02 2017
-@@ -1,2 +1,2 @@
--add_subdirectory(usd)
-+# add_subdirectory(usd)
- 

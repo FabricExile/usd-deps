@@ -86,6 +86,13 @@ if platform.system() == 'Windows':
 elif platform.system() == 'Darwin':
   tbbLibSuffix = '.a' # dylib for dynamic
 
+if platform.system() == 'Windows':
+  tbbLibrary = os.path.join(stage, 'lib', tbbLibPrefix+'tbb'+tbbLibSuffix)
+  tbbMallocLibrary = os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc'+tbbLibSuffix)
+else:
+  tbbLibrary = os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix)
+  tbbMallocLibrary = os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc_static'+tbbLibSuffix)
+
 #========================================= clean =====================================
 if target in ['clean']:
   print 'removing %s' % build
@@ -361,7 +368,11 @@ if requiresBuild('tbb', ['opensubdiv']):
   if not platform.system() == 'Windows':
     cflags['CMAKE_CXX_FLAGS'] =  '-fPIC'
 
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc_static', 'tbb_static'], flags=cflags)
+  if platform.system() == 'Windows':
+    project = ['tbbmalloc', 'tbb']
+  else:
+    project = ['tbbmalloc_static', 'tbb_static']
+  runCMake('tbb', 'tbb-tbb43u6', projects, flags=cflags)
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
@@ -494,10 +505,10 @@ if requiresBuild('opensubdiv', excludeFromAllTarget=True):
       'PTEX_INCLUDE_DIR': os.path.join(stage, 'include'),
       'PTEX_LIBRARY': os.path.join(ptexbuildpath, 'ptex', 'Release', 'Ptex.lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
-      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'TBB_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
-      'TBB_tbb_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
-      'TBB_tbbmalloc_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc_static'+tbbLibSuffix),
+      'TBB_LIBRARIES': tbbLibrary + ' ' + tbbMallocLibrary,
+      'TBB_LIBRARY': tbbLibrary,
+      'TBB_tbb_LIBRARY': tbbLibrary,
+      'TBB_tbbmalloc_LIBRARY': tbbMallocLibrary,
 
       'NO_LIB': 'off',
       'NO_EXAMPLES': 'on',
@@ -580,7 +591,6 @@ if requiresBuild('usd', excludeFromAllTarget=False):
   else:
     patchSourceFile(os.path.join(root, 'USD', 'cmake', 'defaults', 'Packages.cmake'), 'USD/Packages.cmake.gcc.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'cmake', 'macros', 'Public.cmake'), 'USD/Public.cmake.patch', throw=False)
-  patchSourceFile(os.path.join(root, 'USD', 'extras', 'CMakeLists.txt'), 'USD/extras.CMakeLists.txt.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'layer.h'), 'USD/sdf.layer.h.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'lib', 'sdf', 'textFileFormat.cpp'), 'USD/textFileFormat.cpp.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'arch', 'fileSystem.cpp'), 'USD/fileSystem.cpp.patch', throw=False)
@@ -596,10 +606,10 @@ if requiresBuild('usd', excludeFromAllTarget=False):
       'BOOST_INCLUDEDIR': os.path.join(stage, 'include'),
       'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
-      'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'TBB_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
-      'TBB_tbb_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
-      'TBB_tbbmalloc_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc_static'+tbbLibSuffix),
+      'TBB_LIBRARIES': tbbLibrary + ' ' + tbbMallocLibrary,
+      'TBB_LIBRARY': tbbLibrary,
+      'TBB_tbb_LIBRARY': tbbLibrary,
+      'TBB_tbbmalloc_LIBRARY': tbbMallocLibrary,
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
       'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half'),
