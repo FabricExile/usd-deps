@@ -77,6 +77,15 @@ else:
     GCC_CXX = 'c++'
     GCC_LIB = ''
 
+tbbLibPrefix = 'lib'
+if platform.system() == 'Windows':
+  tbbLibPrefix = ''
+tbbLibSuffix = '.a' # so for dynamic
+if platform.system() == 'Windows':
+  tbbLibSuffix = '.lib'
+elif platform.system() == 'Darwin':
+  tbbLibSuffix = '.a' # dylib for dynamic
+
 #========================================= clean =====================================
 if target in ['clean']:
   print 'removing %s' % build
@@ -348,7 +357,11 @@ if requiresBuild('tbb', ['opensubdiv']):
   if os.environ.has_key('GCC_ROOT'):
     patchSourceFile('tbb/tbb-tbb43u6/CMakeLists.txt', 'tbb/CMakeLists.txt.patch')
 
-  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc', 'tbb'])
+  cflags = {}
+  if not platform.system() == 'Windows':
+    cflags['CMAKE_CXX_FLAGS'] =  '-fPIC'
+
+  runCMake('tbb', 'tbb-tbb43u6', ['tbbmalloc_static', 'tbb_static'], flags=cflags)
 
   stageResults('tbb', [
     os.path.join(build, 'tbb', 'tbb-tbb43u6', 'include')
@@ -482,6 +495,9 @@ if requiresBuild('opensubdiv', excludeFromAllTarget=True):
       'PTEX_LIBRARY': os.path.join(ptexbuildpath, 'ptex', 'Release', 'Ptex.lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
+      'TBB_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
+      'TBB_tbb_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
+      'TBB_tbbmalloc_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc_static'+tbbLibSuffix),
 
       'NO_LIB': 'off',
       'NO_EXAMPLES': 'on',
@@ -572,15 +588,6 @@ if requiresBuild('usd', excludeFromAllTarget=False):
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'base', 'lib', 'plug', 'CMakeLists.txt'), 'USD/plug.CMakeLists.txt.patch', throw=False)
   patchSourceFile(os.path.join(root, 'USD', 'pxr', 'usd', 'CMakeLists.txt'), 'USD/usd.CMakeLists.txt.patch', throw=False)
 
-  libPrefix = 'lib'
-  if platform.system() == 'Windows':
-    libPrefix = ''
-  libSuffix = '.so'
-  if platform.system() == 'Windows':
-    libSuffix = '.lib'
-  elif platform.system() == 'Darwin':
-    libSuffix = '.dylib'
-
   runCMake('USD', sourcepath, [
       'install',
     ],
@@ -589,15 +596,15 @@ if requiresBuild('usd', excludeFromAllTarget=False):
       'BOOST_LIBRARYDIR': os.path.join(stage, 'lib'),
       'TBB_INCLUDE_DIR': os.path.join(stage, 'include', 'tbb'),
       'TBB_LIBRARIES': os.path.join(stage, 'lib'),
-      'TBB_LIBRARY': os.path.join(stage, 'lib', libPrefix+'tbb'+libSuffix),
-      'TBB_tbb_LIBRARY': os.path.join(stage, 'lib', libPrefix+'tbb'+libSuffix),
-      'TBB_tbbmalloc_LIBRARY': os.path.join(stage, 'lib', libPrefix+'tbbmalloc'+libSuffix),
+      'TBB_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
+      'TBB_tbb_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbb_static'+tbbLibSuffix),
+      'TBB_tbbmalloc_LIBRARY': os.path.join(stage, 'lib', tbbLibPrefix+'tbbmalloc_static'+tbbLibSuffix),
       'OPENEXR_INCLUDE_DIR': os.path.join(stage, 'include'),
       'OPENEXR_LIBRARY_DIR': os.path.join(stage, 'lib'),
       'OPENEXR_Half_LIBRARY': os.path.join(stage, 'lib', 'Half'),
 
       'PXR_STRICT_BUILD_MODE': 'off',
-      'PXR_LIB_PREFIX': libPrefix,
+      'PXR_LIB_PREFIX': tbbLibPrefix,
       'PXR_VALIDATE_GENERATED_CODE': 'off',
       'PXR_BUILD_TESTS': 'off',
       'PXR_BUILD_IMAGING': 'off',
